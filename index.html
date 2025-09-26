@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Nurse Logbook</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Travel Nurse Logbook</h1>
+            <nav id="navigation">
+                <div id="auth-nav" class="nav-group">
+                    <button id="login-btn" class="nav-btn">Login</button>
+                    <button id="register-btn" class="nav-btn">Register</button>
+                </div>
+                <div id="user-nav" class="nav-group hidden">
+                    <span id="welcome-user"></span>
+                    <button id="logout-btn" class="nav-btn">Logout</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Login/Register Section -->
+        <section id="auth-section" class="section">
+            <div id="login-form" class="form-container">
+                <h2>Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+                <p>Don't have an account? <a href="#" id="show-register">Register here</a></p>
+            </div>
+
+            <div id="register-form" class="form-container hidden">
+                <h2>Register</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="register-name">Full Name:</label>
+                        <input type="text" id="register-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email:</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password:</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-license">Nursing License Number:</label>
+                        <input type="text" id="register-license" required>
+                    </div>
+                    <button type="submit">Register</button>
+                </form>
+                <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="section hidden">
+            <div class="dashboard-header">
+                <h2>Your Travel Nurse Contracts</h2>
+                <button id="add-contract-btn" class="btn-primary">Add New Contract</button>
+            </div>
+
+            <!-- Add Contract Form -->
+            <div id="add-contract-form" class="form-container hidden">
+                <h3>Add New Contract</h3>
+                <form id="contractForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hospital-name">Hospital/Facility Name:</label>
+                            <input type="text" id="hospital-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="location">Location (City, State):</label>
+                            <input type="text" id="location" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="specialty">Specialty:</label>
+                            <select id="specialty" required>
+                                <option value="">Select Specialty</option>
+                                <option value="ICU">ICU</option>
+                                <option value="ER">Emergency Room</option>
+                                <option value="Med-Surg">Medical-Surgical</option>
+                                <option value="Telemetry">Telemetry</option>
+                                <option value="OR">Operating Room</option>
+                                <option value="Labor & Delivery">Labor & Delivery</option>
+                                <option value="NICU">NICU</option>
+                                <option value="Pediatrics">Pediatrics</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="shift">Shift:</label>
+                            <select id="shift" required>
+                                <option value="">Select Shift</option>
+                                <option value="Days">Days</option>
+                                <option value="Nights">Nights</option>
+                                <option value="Rotating">Rotating</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="start-date">Start Date:</label>
+                            <input type="date" id="start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">End Date:</label>
+                            <input type="date" id="end-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hourly-rate">Hourly Rate ($):</label>
+                            <input type="number" id="hourly-rate" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="housing-stipend">Housing Stipend ($):</label>
+                            <input type="number" id="housing-stipend" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="agency">Agency:</label>
+                        <input type="text" id="agency">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes:</label>
+                        <textarea id="notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save Contract</button>
+                        <button type="button" id="cancel-contract" class="btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Contracts List -->
+            <div id="contracts-list" class="contracts-container">
+                <div id="no-contracts" class="no-data">
+                    <p>No contracts logged yet. Click "Add New Contract" to get started!</p>
+                </div>
+                <div id="contracts-grid" class="contracts-grid hidden">
+                    <!-- Contracts will be dynamically populated here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="message-container" class="message-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
