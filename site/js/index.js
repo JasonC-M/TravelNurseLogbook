@@ -123,14 +123,29 @@ async function handleSignUp(e) {
         return;
     }
 
+    // Check password complexity
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        showError('signup-error', 'Password must contain at least one lowercase letter, one uppercase letter, and one number');
+        return;
+    }
+
     // Ensure auth is available
     if (!window.auth) {
         showError('signup-error', 'Authentication system not ready. Please refresh the page.');
         return;
     }
     
+    // Split name into first and last name for backend compatibility
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    
     // Call auth.js for authentication logic
-    const result = await window.auth.signUp(email, password, { full_name: name });
+    const result = await window.auth.signUp(email, password, { 
+        first_name: firstName, 
+        last_name: lastName,
+        full_name: name 
+    });
     
     if (result.success) {
         showSuccess('signup-success', result.message);
