@@ -766,7 +766,7 @@ class LogbookApp {
     this.updateProfileButtonText(profileBtn);
   }
 
-  // Update profile button text with user's full name
+  // Update profile button text with user's first and last name
   updateProfileButtonText(profileBtn) {
     if (!profileBtn) {
       profileBtn = document.getElementById('profile-btn');
@@ -776,31 +776,36 @@ class LogbookApp {
     // Try to get name from profile data first
     if (window.profileManager && window.profileManager.userProfile) {
       const profile = window.profileManager.userProfile;
-      const fullName = profile.full_name || profile.first_name + ' ' + profile.last_name;
-      if (fullName && fullName.trim() !== ' ') {
-        profileBtn.textContent = fullName.trim();
+      if (profile.first_name && profile.last_name) {
+        profileBtn.textContent = `${profile.first_name} ${profile.last_name}`;
+        return;
+      } else if (profile.first_name) {
+        profileBtn.textContent = profile.first_name;
+        return;
+      } else if (profile.full_name && profile.full_name.trim()) {
+        profileBtn.textContent = profile.full_name.trim();
         return;
       }
     }
     
-    // Fallback to auth metadata or email
+    // Fallback to auth metadata
     if (this.currentUser) {
       const user = this.currentUser;
       const metadata = user.user_metadata || {};
       
-      if (metadata.full_name) {
-        profileBtn.textContent = metadata.full_name;
-      } else if (metadata.first_name && metadata.last_name) {
+      if (metadata.first_name && metadata.last_name) {
         profileBtn.textContent = `${metadata.first_name} ${metadata.last_name}`;
       } else if (metadata.first_name) {
         profileBtn.textContent = metadata.first_name;
+      } else if (metadata.full_name) {
+        profileBtn.textContent = metadata.full_name;
       } else {
-        // Last resort: use email username
-        const userEmail = user.email;
-        if (userEmail) {
-          profileBtn.textContent = userEmail.split('@')[0];
-        }
+        // Fallback to "Profile" if no name is available
+        profileBtn.textContent = 'Profile';
       }
+    } else {
+      // No user data available
+      profileBtn.textContent = 'Profile';
     }
   }
 }
