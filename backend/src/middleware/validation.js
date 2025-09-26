@@ -129,16 +129,16 @@ export const validateRegister = [
     .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
   
   body('first_name')
-    .optional()
+    .notEmpty()
     .trim()
     .isLength({ min: 1, max: 50 })
-    .withMessage('First name must be between 1 and 50 characters'),
+    .withMessage('First name is required and must be between 1 and 50 characters'),
   
   body('last_name')
-    .optional()
+    .notEmpty()
     .trim()
     .isLength({ min: 1, max: 50 })
-    .withMessage('Last name must be between 1 and 50 characters'),
+    .withMessage('Last name is required and must be between 1 and 50 characters'),
   
   handleValidationErrors
 ]

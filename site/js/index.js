@@ -103,12 +103,13 @@ async function handleSignIn(e) {
 async function handleSignUp(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const name = formData.get('name');
+    const firstName = formData.get('first_name');
+    const lastName = formData.get('last_name');
     const email = formData.get('email');
     const password = formData.get('password');
     const confirm = formData.get('confirm');
 
-    if (!name || !email || !password || !confirm) {
+    if (!firstName || !lastName || !email || !password || !confirm) {
         showError('signup-error', 'Please fill in all fields');
         return;
     }
@@ -135,16 +136,14 @@ async function handleSignUp(e) {
         return;
     }
     
-    // Split name into first and last name for backend compatibility
-    const nameParts = name.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
+    // Create full name from separate fields
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
     
     // Call auth.js for authentication logic
     const result = await window.auth.signUp(email, password, { 
-        first_name: firstName, 
-        last_name: lastName,
-        full_name: name 
+        first_name: firstName.trim(), 
+        last_name: lastName.trim(),
+        full_name: fullName 
     });
     
     if (result.success) {
