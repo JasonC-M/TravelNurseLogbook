@@ -1,0 +1,201 @@
+import express from 'express'
+import { supabase, createUserClient } from '../config/supabase.js'
+import { asyncHandler } from '../middleware/errorHandler.js'
+import { validateProfile } from '../middleware/validation.js'
+import { requireAuth } from '../middleware/auth.js'
+
+const router = express.Router()
+
+// Apply authentication to all routes
+router.use(requireAuth)
+
+// Get user profile
+router.get('/', asyncHandler(async (req, res) => {
+  const userClient = createUserClient(req.token)
+
+  const { data, error } = await userClient
+    .from('user_profiles')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // Profile doesn't exist, create a basic one
+      const newProfile = {
+        user_id: req.user.id,  // Changed from 'id' to 'user_id'
+        email: req.user.email,
+        first_name: req.user.user_metadata?.first_name || null,
+        last_name: req.user.user_metadata?.last_name || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      const { data: createdProfile, error: createError } = await userClient
+        .from('user_profiles')
+        .insert([newProfile])
+        .select()
+        .single()
+
+      if (createError) {
+        throw new Error(`Failed to create profile: ${createError.message}`)
+      }
+
+      return res.json({ profile: createdProfile })
+    }
+    throw new Error(`Failed to fetch profile: ${error.message}`)
+  }
+
+  res.json({ profile: data })
+}))
+
+// Update user profile
+router.put('/', validateProfile, asyncHandler(async (req, res) => {
+  const { first_name, last_name, phone, specialization, license_number } = req.body
+
+  const userClient = createUserClient(req.token)
+
+  const updateData = {
+    first_name: first_name || null,
+    last_name: last_name || null,
+    phone: phone || null,
+    specialization: specialization || null,
+    license_number: license_number || null,
+    updated_at: new Date().toISOString()
+  }
+
+  // First check if profile exists
+  const { data: existingProfile } = await userClient
+    .from('user_profiles')
+    .select('user_id')
+    .eq('user_id', req.user.id)
+    .single()
+
+  let result
+
+  if (existingProfile) {
+    // Update existing profile
+    const { data, error } = await userClient
+      .from('user_profiles')
+      .update(updateData)
+      .eq('user_id', req.user.id)
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to update profile: ${error.message}`)
+    }
+
+    result = data
+  } else {
+    // Create new profile
+    const newProfile = {
+      user_id: req.user.id,  // Changed from 'id' to 'user_id'
+      email: req.user.email,
+      ...updateData,
+      created_at: new Date().toISOString()
+    }
+
+    const { data, error } = await userClient
+      .from('user_profiles')
+      .insert([newProfile])
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to create profile: ${error.message}`)
+    }
+
+    result = data
+  }
+
+  // Also update user metadata in auth if first_name or last_name changed
+  if (first_name || last_name) {
+    const { error: authError } = await supabase.auth.updateUser({
+      data: {
+        first_name: first_name || req.user.user_metadata?.first_name,
+        last_name: last_name || req.user.user_metadata?.last_name
+      }
+    })
+
+    if (authError) {
+      console.warn('Failed to update auth metadata:', authError.message)
+    }
+  }
+
+  res.json({
+    message: 'Profile updated successfully',
+    profile: result
+  })
+}))
+
+// Delete user profile (soft delete - keeps auth user)
+router.delete('/', asyncHandler(async (req, res) => {
+  const userClient = createUserClient(req.token)
+
+  const { error } = await userClient
+    .from('user_profiles')
+    .delete()
+    .eq('user_id', req.user.id)
+
+  if (error) {
+    throw new Error(`Failed to delete profile: ${error.message}`)
+  }
+
+  res.json({
+    message: 'Profile deleted successfully. Authentication account remains active.'
+  })
+}))
+
+// Get profile statistics
+router.get('/stats', asyncHandler(async (req, res) => {
+  const userClient = createUserClient(req.token)
+
+  // Get profile info
+  const { data: profile } = await userClient
+    .from('user_profiles')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .single()
+
+  // Get contracts count
+  const { data: contracts } = await userClient
+    .from('contracts')
+    .select('id, start_date, end_date')
+    .eq('user_id', req.user.id)
+
+  const now = new Date()
+  const totalContracts = contracts?.length || 0
+  const completedContracts = contracts?.filter(c => new Date(c.end_date) < now).length || 0
+  
+  // Calculate total days worked (rough estimate)
+  const totalDaysWorked = contracts?.reduce((total, contract) => {
+    const start = new Date(contract.start_date)
+    const end = new Date(contract.end_date)
+    const days = Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)))
+    return total + days
+  }, 0) || 0
+
+  const stats = {
+    profile_completeness: calculateProfileCompleteness(profile),
+    total_contracts: totalContracts,
+    completed_contracts: completedContracts,
+    estimated_days_worked: totalDaysWorked,
+    member_since: req.user.created_at,
+    last_login: req.user.last_sign_in_at
+  }
+
+  res.json({ stats })
+}))
+
+// Helper function to calculate profile completeness
+function calculateProfileCompleteness(profile) {
+  if (!profile) return 0
+
+  const fields = ['first_name', 'last_name', 'phone', 'specialization', 'license_number']
+  const completedFields = fields.filter(field => profile[field] && profile[field].trim())
+  
+  return Math.round((completedFields.length / fields.length) * 100)
+}
+
+export default router

@@ -30,15 +30,24 @@ case "$1" in
         docker-compose logs -f
         ;;
     "status")
-        echo "TNL Docker container status:"
+        echo "TNL Docker containers status:"
         cd "$(dirname "$0")"
         docker-compose ps
         echo ""
         echo "Testing connectivity..."
+        
+        # Test frontend
         if curl -k -s https://localhost > /dev/null 2>&1; then
-            echo "✅ Site is accessible at https://localhost"
+            echo "✅ Frontend is accessible at https://localhost"
         else
-            echo "❌ Site is not accessible"
+            echo "❌ Frontend is not accessible"
+        fi
+        
+        # Test backend API
+        if curl -k -s https://localhost/api/health > /dev/null 2>&1; then
+            echo "✅ Backend API is accessible at https://localhost/api"
+        else
+            echo "❌ Backend API is not accessible"
         fi
         ;;
     *)

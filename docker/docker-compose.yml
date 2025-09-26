@@ -1,7 +1,32 @@
 version: '3.8'
 
 services:
-  # Nginx Web Server (HTTPS Frontend) - Minimal setup for testing the TNL site
+  # Node.js Backend API
+  backend:
+    build: 
+      context: ../backend
+      dockerfile: Dockerfile.dev  # Use development Dockerfile for hot-reload
+    container_name: tnl_backend
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - ../backend/.env  # Load environment variables from .env file
+    ports:
+      - "3000:3000"    # API port
+    volumes:
+      - ../backend:/app          # Mount source code for hot-reload
+      - /app/node_modules        # Preserve node_modules in container
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "/app/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tnl_network
+
+  # Nginx Web Server (HTTPS Frontend + API Proxy)
   nginx:
     image: nginx:alpine
     container_name: tnl_web
@@ -12,6 +37,14 @@ services:
       - ../site:/usr/share/nginx/html      # Mount the downloaded site directory
       - ./nginx-https.conf:/etc/nginx/nginx.conf
       - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
     restart: unless-stopped
+    networks:
+      - tnl_network
 
-# No database or backend needed for testing the static site
+networks:
+  tnl_network:
+    driver: bridge
+
+# Note: No database service needed as we're using Supabase cloud
