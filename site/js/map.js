@@ -7,7 +7,7 @@ let contractMap;
 
 // Initialize map with layer control
 function initializeMap() {
-    contractMap = L.map('map').setView([39.8283, -98.5795], 4); // Centered on US
+    contractMap = L.map('map').setView([39.8283, -98.5795], 5); // Centered on US
 
     const defaultLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'

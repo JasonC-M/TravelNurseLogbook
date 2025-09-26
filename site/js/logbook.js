@@ -62,24 +62,24 @@ function sortContractsByDate() {
 }
 
 //=============================================================================
-// TEST CONTRACTS MODULE - Development Only
+// SAMPLE CONTRACTS MODULE
 //=============================================================================
 
-class TestContractsLoader {
+class SampleContractsLoader {
   constructor() {
-    // Test contracts data is maintained in sql/test_contracts.sql
+    // Sample contracts data is maintained in sql/sample_contracts.sql
     // This class loads the data dynamically from that source
-    this.testContracts = null; // Will be loaded async
+    this.sampleContracts = null; // Will be loaded async
   }
 
-  // Load test contracts data from SQL file
-  async loadTestContractsData() {
-    if (this.testContracts) {
-      return this.testContracts; // Return cached data
+  // Load sample contracts data from SQL file
+  async loadSampleContractsData() {
+    if (this.sampleContracts) {
+      return this.sampleContracts; // Return cached data
     }
 
     try {
-      const response = await fetch('./sql/test_contracts.sql');
+      const response = await fetch('./sql/sample_contracts.sql');
       
       if (!response.ok) {
         throw new Error(`Failed to load SQL file: ${response.status} ${response.statusText}`);
@@ -88,13 +88,13 @@ class TestContractsLoader {
       const sqlContent = await response.text();
       
       // Parse SQL INSERT statements to extract contract data
-      this.testContracts = this.parseSQLToContracts(sqlContent);
+      this.sampleContracts = this.parseSQLToContracts(sqlContent);
       
-      return this.testContracts;
+      return this.sampleContracts;
       
     } catch (error) {
-      // Fallback to a minimal test contract to prevent complete failure
-      this.testContracts = [{
+      // Fallback to a minimal sample contract to prevent complete failure
+      this.sampleContracts = [{
         hospital_name: 'Demo Hospital',
         address: '123 Demo St, Demo City, ST 12345',
         latitude: 39.8283,
@@ -102,7 +102,7 @@ class TestContractsLoader {
         start_date: '2025-01-01',
         end_date: '2025-03-31'
       }];
-      return this.testContracts;
+      return this.sampleContracts;
     }
   }
 
@@ -143,9 +143,9 @@ class TestContractsLoader {
     }, 2000);
   }
 
-  // Load all test contracts into the database
+  // Load all sample contracts into the database
   async loadAll() {
-    const loadButton = document.getElementById('load-test-contracts');
+    const loadButton = document.getElementById('add-sample-contracts');
     if (!loadButton) {
       return { success: false, error: 'Button not found' };
     }
@@ -183,8 +183,8 @@ class TestContractsLoader {
 
   // Insert contracts with progress updates
   async insertContracts(userId, progressButton) {
-    // Load test contracts data from SQL file
-    const contracts = await this.loadTestContractsData();
+    // Load sample contracts data from SQL file
+    const contracts = await this.loadSampleContractsData();
     
     const db = new Database();
     let successCount = 0;
@@ -222,12 +222,12 @@ class TestContractsLoader {
   }
 }
 
-// Global test contracts loader instance
-const testContractsLoader = new TestContractsLoader();
+// Global sample contracts loader instance
+const sampleContractsLoader = new SampleContractsLoader();
 
 // Global function for backwards compatibility
-async function loadTestContracts() {
-  return await testContractsLoader.loadAll();
+async function loadSampleContracts() {
+  return await sampleContractsLoader.loadAll();
 }
 
 // Function to remove all contracts for the current user
@@ -403,11 +403,11 @@ class LogbookApp {
       }
     });
     
-    // Initialize test contracts button
-    const loadTestContractsBtn = document.querySelector('#load-test-contracts');
-    if (loadTestContractsBtn) {
-      loadTestContractsBtn.addEventListener('click', async () => {
-        await loadTestContracts();
+    // Initialize sample contracts button
+    const addSampleContractsBtn = document.querySelector('#add-sample-contracts');
+    if (addSampleContractsBtn) {
+      addSampleContractsBtn.addEventListener('click', async () => {
+        await loadSampleContracts();
       });
     }
 
@@ -637,17 +637,17 @@ class LogbookApp {
       // Update contract count in the title
       this.updateContractCount(result.data.length);
 
-      // Toggle between test contracts buttons based on whether user has contracts
-      const loadTestContractsBtn = document.querySelector('#load-test-contracts');
+      // Toggle between sample contracts buttons based on whether user has contracts
+      const addSampleContractsBtn = document.querySelector('#add-sample-contracts');
       const removeAllContractsBtn = document.querySelector('#remove-all-contracts');
       
       if (result.data.length === 0) {
-        // Show load button if no contracts exist
-        if (loadTestContractsBtn) loadTestContractsBtn.style.display = 'inline-block';
+        // Show add sample contracts button if no contracts exist
+        if (addSampleContractsBtn) addSampleContractsBtn.style.display = 'inline-block';
         if (removeAllContractsBtn) removeAllContractsBtn.style.display = 'none';
       } else {
         // Show remove button if contracts exist
-        if (loadTestContractsBtn) loadTestContractsBtn.style.display = 'none';
+        if (addSampleContractsBtn) addSampleContractsBtn.style.display = 'none';
         if (removeAllContractsBtn) removeAllContractsBtn.style.display = 'inline-block';
       }
 
