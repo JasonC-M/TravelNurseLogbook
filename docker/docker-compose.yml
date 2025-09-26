@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  # Nginx Web Server (HTTPS Frontend) - Minimal setup for testing the TNL site
+  nginx:
+    image: nginx:alpine
+    container_name: tnl_web
+    ports:
+      - "443:443"    # HTTPS
+      - "80:80"      # HTTP redirect to HTTPS
+    volumes:
+      - ../site:/usr/share/nginx/html      # Mount the downloaded site directory
+      - ./nginx-https.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    restart: unless-stopped
+
+# No database or backend needed for testing the static site
