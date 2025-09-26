@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Nurse Logbook</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon.png">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/index.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="unified-container">
+        <!-- Left Panel - Authentication -->
+        <div class="auth-panel">
+            <!-- Top Cell - Header Area -->
+            <div class="auth-header-cell">
+                <div class="auth-header">
+                    <h1>Travel Nurse Logbook</h1>
+                    <p>Secure contract tracking and location management</p>
+                </div>
+            </div>
+            
+            <!-- Bottom Cell - Forms Area -->
+            <div class="auth-forms-cell">
+                <!-- Mode Tabs -->
+                <div class="auth-modes">
+                <div class="mode-tabs">
+                    <button class="mode-tab active" data-mode="signin">Sign In</button>
+                    <button class="mode-tab" data-mode="signup">Sign Up</button>
+                    <button class="mode-tab" data-mode="reset">Reset</button>
+                </div>
+                
+                <!-- Sign In Form -->
+                <form id="signin-form" class="auth-form active">
+                    <div class="form-group">
+                        <label for="signin-email">Email Address</label>
+                        <input type="email" id="signin-email" name="email" value="jason.costermullen@gmail.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signin-password">Password</label>
+                        <input type="password" id="signin-password" name="password" value="9ij9ij(IJ" required>
+                    </div>
+                    
+                    <div id="signin-error" class="error-message"></div>
+                    <div id="signin-success" class="success-message"></div>
+                    
+                    <button type="submit" class="auth-btn">Sign In</button>
+                </form>
+                
+                <!-- Sign Up Form -->
+                <form id="signup-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" name="name" value="Jason Coster-Mullen" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" name="email" value="jason.costermullen@gmail.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" name="password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signup-confirm">Confirm Password</label>
+                        <input type="password" id="signup-confirm" name="confirm" required>
+                    </div>
+                    
+                    <div id="signup-error" class="error-message"></div>
+                    <div id="signup-success" class="success-message"></div>
+                    
+                    <button type="submit" class="auth-btn">Create Account</button>
+                </form>
+                
+                <!-- Reset Password Form -->
+                <form id="reset-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="reset-email">Email Address</label>
+                        <input type="email" id="reset-email" name="email" value="jason.costermullen@gmail.com" required>
+                    </div>
+                    
+                    <div id="reset-error" class="error-message"></div>
+                    <div id="reset-success" class="success-message"></div>
+                    
+                    <button type="submit" class="auth-btn">Send Reset Link</button>
+                </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Preview -->
+        <div class="preview-panel">
+            <div class="preview-content">
+                <h2>Your Contract Locations</h2>
+                <p>Visualize and track your travel nursing assignments across the country</p>
+                
+                <div class="preview-map-container">
+                    <img src="images/static_map.png" alt="Travel nursing locations across the US" class="preview-map">
+                </div>
+                
+                <ul class="feature-list">
+                    <li>Interactive Contract Mapping</li>
+                    <li>Secure Data Encryption</li>
+                    <li>Professional Grade Security</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/supabase_config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>

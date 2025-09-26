@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Nurse Logbook</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/logbook.css">
+    <!-- External Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <div id="container">
+        <!-- Left Panel -->
+        <div id="left-panel">
+          <!-- Profile and Logout Buttons -->
+          <div class="header-buttons">
+            <button id="profile-btn" class="profile-button">Profile</button>
+            <button id="logout-btn" class="logout-button">Logout</button>
+          </div>
+
+          <!-- Add New Contract Button -->
+          <div class="add-contract-button">
+            <button>Add New Contract</button>
+          </div>
+
+          <!-- Contract Cell Title cell -->
+          <div class="contract-cell-title">
+            <h3>Completed Contracts <span id="contract-count">(0)</span></h3>
+            <!-- Sorting Buttons -->
+            <div class="sorting-buttons">
+                <button id="load-test-contracts" title="Load test contracts for development" style="display: none;">Load Test Contracts</button>
+                <button id="remove-all-contracts" title="Remove all contracts from your logbook" style="display: none;">Remove All Contracts</button>
+                <button id="sort-name">Sort A-Z</button>
+                <button id="sort-date">Sort by Date</button>
+                <button id="reset-map-view" title="Fit view to show all contracts" style="padding: 8px; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; background-color: rgba(173, 216, 230, 0.3); border-radius: 6px; border: none; margin-left: 8px;">
+                    <img src="images/globe.png" alt="Fit map view" style="width: 20px; height: 20px; pointer-events: none;">
+                </button>
+            </div>
+          </div>
+
+          <!-- Contract Cell -->
+          <div class="contract-cell">
+            <!-- Contract cards will be loaded dynamically from the database -->
+          </div>
+        </div>
+        <!-- Right Panel -->
+        <div id="right-panel">
+          <div id="map"></div>
+          <!-- Profile slideout container -->
+          <div id="profile-slideout" class="profile-slideout">
+            <!-- Profile forms will be loaded here dynamically -->
+          </div>
+          <!-- Contract slideout container -->
+          <div id="contract-slideout" class="contract-slideout">
+            <!-- Contract forms will be loaded here dynamically -->
+          </div>
+        </div>
+    </div>
+      
+  <!-- Authentication Protection -->
+  <script src="js/supabase_config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/component-loader.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/contract.js"></script>
+  <script src="js/map.js"></script>
+  <!-- All JavaScript functionality moved to logbook.js for better separation of concerns -->
+  <script src="js/logbook.js"></script>
+</body>
+</html>

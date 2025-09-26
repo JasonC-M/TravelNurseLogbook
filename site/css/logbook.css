@@ -1,0 +1,603 @@
+/* Universal interactive elements cursor */
+button, .card, [role="button"], .clickable, input[type="submit"], input[type="button"], 
+a, .profile-button, .add-contract-button, .map-pin, .sorting-buttons button {
+    cursor: pointer;
+}
+
+/* Keep map with grab cursor for panning/zooming */
+#map {
+    cursor: grab;
+}
+
+#map:active {
+    cursor: grabbing;
+}
+
+/* Reset default margins and padding */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Container styles */
+#container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+/* Left panel styles */
+#left-panel {
+    width: fit-content;
+    background-color: #f4f4f4;
+    border-right: 2px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    flex-shrink: 0;
+}
+
+/* Header buttons container */
+.header-buttons {
+    display: flex;
+    gap: 1px;
+    margin: 2px 0;
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+
+.profile-button, .logout-button {
+    padding: 16px 12px;
+    margin: 2px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    background-color: #007bff;
+    color: white;
+    box-sizing: border-box;
+}
+
+.profile-button {
+    flex: 1; /* Takes remaining space */
+    min-width: 0; /* Allow shrinking */
+}
+
+.profile-button:hover, .logout-button:hover {
+    background-color: #0056b3;
+}
+
+.logout-button {
+    flex: 0 0 auto; /* Shrink to fit content */
+    white-space: nowrap;
+}
+
+/* Add New Contract button container */
+.add-contract-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #ddd;
+    margin: 2px 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #fff;
+}
+
+.add-contract-button button {
+    width: calc(100% - 4px);
+    padding: 16px 12px;
+    margin: 2px;
+    box-sizing: border-box;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+.add-contract-button button:hover {
+    background-color: #0056b3;
+}
+
+/* Title styles for the contract cell */
+.contract-cell-title {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #ddd;
+    margin: 2px 0; /* Reduce top and bottom margin to 2 points */
+    padding: 8px; /* Add padding for content */
+    box-sizing: border-box;
+    background-color: #f8fbff; /* Very subtle pale blue */
+}
+
+.contract-cell-title h3 {
+    margin: 2px 0; /* Reduce top and bottom margin for the <H3> element */
+    font-size: 18px; /* Optional: Adjust font size if needed */
+    line-height: 1.2; /* Optional: Adjust line height for better spacing */
+}
+
+/* Sorting Buttons Styles */
+.sorting-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 5px; /* Add spacing between title and buttons */
+  }
+  
+  .sorting-buttons button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    background-color: #007bff; /* Blue background */
+    color: #fff; /* White text */
+    border: none; /* Remove borders */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor */
+  }
+  
+  .sorting-buttons button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+  }
+
+/* Contract cell styles */
+.contract-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Align content to the top */
+    align-items: stretch; /* Allow cards to use full width */
+    border: 1px solid #ddd;
+    margin: 2px 0;
+    padding: 0; /* Remove padding to match other containers */
+    box-sizing: border-box;
+    background-color: #fff;
+    flex: 1; /* Allow cell to expand to fill available space */
+    overflow-y: auto; /* Enable vertical scrolling if needed */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Card styles */
+.card {
+    display: flex;
+    justify-content: space-between; /* Space between text and button */
+    align-items: center; /* Align content vertically */
+    padding: 8px 12px; /* Better text spacing - 8px top/bottom, 12px left/right */
+    margin: 2px; /* 2px margin on all sides to match button styling */
+    background-color: #f9f9f9; /* Light background for cards */
+    border: 1px solid #ccc; /* Border around the card */
+    border-radius: 5px; /* Rounded corners */
+    box-sizing: border-box; /* Include padding and border in the width */
+    width: calc(100% - 4px); /* Account for 2px margin on each side */
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column; /* Stack text lines vertically */
+    margin-right: 10px; /* Add space between text and the button */
+    flex: 1; /* Allow content to expand */
+    overflow: hidden; /* Prevent content from overflowing */
+}
+
+.hospital-name {
+    font-weight: bold; /* Bold hospital name */
+    font-size: 16px; /* Slightly larger font size */
+    margin: 1px 0 0 0; /* Closer to edge - 1px top margin */
+    line-height: 1.1; /* Tight line height for compact display */
+    white-space: nowrap; /* Prevent text from wrapping to multiple lines */
+}
+
+.address {
+    font-size: 12px; /* Smaller font size for address */
+    color: #555; /* Slightly muted text color */
+    margin: 1px 0 0 0; /* Closer spacing - 1px top margin */
+    line-height: 1.1; /* Tight line height for compact display */
+}
+
+.dates {
+    font-size: 12px; /* Smaller font size for dates */
+    color: #777; /* Muted text color */
+    margin: 1px 0 0 0; /* Closer spacing - 1px top margin */
+    line-height: 1.1; /* Tight line height for compact display */
+}
+
+/* Tax Compliance Color Coding */
+.contract-current {
+    background-color: #e3f2fd; /* Pale blue - currently working */
+}
+
+.contract-restricted {
+    background-color: #ffeaea; /* Pale red - cannot return (within 2 years) */
+}
+
+.contract-available {
+    background-color: #e8f5e8; /* Pale green - clear to return (2+ years) */
+}
+
+/* Circle Blink Animation for Map Interaction */
+@keyframes circle-blink {
+    0%, 100% { 
+        stroke-width: 2;
+    }
+    50% { 
+        stroke-width: 5;
+    }
+}
+
+.circle-blink {
+    animation: circle-blink 0.3s ease-in-out 3;
+}
+
+.map-pin {
+    padding: 8px;
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 2px 0; /* Reduce top and bottom margin to 2 points */
+    flex-shrink: 0; /* Prevent map pin from shrinking */
+    cursor: pointer;
+}
+
+.map-pin img {
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+}
+
+/* Right panel styles */
+#right-panel {
+    flex: 1;
+    position: relative;
+}
+
+/* Map container styles */
+#map {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* Profile Overlay Menu */
+.profile-slideout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 1000;
+    overflow-y: auto;
+    display: none;
+}
+
+.profile-slideout.open {
+    display: block;
+}
+
+/* Contract Overlay Menu */
+.contract-slideout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 1000;
+    overflow-y: auto;
+    display: none;
+}
+
+.contract-slideout.open {
+    display: block;
+}
+
+.profile-header {
+    background: #333;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.profile-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-content {
+    padding: 15px;
+}
+
+.profile-section {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.profile-section:last-child {
+    border-bottom: none;
+}
+
+.profile-section h3 {
+    color: #333;
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+}
+
+.profile-field {
+    margin-bottom: 10px;
+}
+
+.profile-field label {
+    font-weight: bold;
+    color: #555;
+    font-size: 0.9em;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.profile-field input {
+    padding: 6px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-field input:disabled {
+    background-color: #f5f5f5;
+    color: #666;
+}
+
+.readonly-field {
+    padding: 6px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    color: #666;
+    font-size: 14px;
+}
+
+.edit-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.error-message {
+    background: #dc3545;
+    color: white;
+    padding: 8px;
+    margin: 8px 0;
+}
+
+.success-message {
+    background: #28a745;
+    color: white;
+    padding: 8px;
+    margin: 8px 0;
+}
+
+/* Contract Form Styles */
+#contract-form button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#contract-form button:hover {
+    background: #0056b3;
+}
+
+#contract-form button[type="button"] {
+    background: #6c757d;
+}
+
+#contract-form button[type="button"]:hover {
+    background: #545b62;
+}
+
+#save-contract {
+    background: #28a745 !important;
+}
+
+#save-contract:hover {
+    background: #1e7e34 !important;
+}
+
+#cancel-contract {
+    background: #dc3545 !important;
+}
+
+#cancel-contract:hover {
+    background: #c82333 !important;
+}
+
+/* Contract Details Form Styles */
+#contract-details-form button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#contract-details-form button:hover {
+    background: #0056b3;
+}
+
+#update-contract {
+    background: #28a745 !important;
+}
+
+#update-contract:hover {
+    background: #1e7e34 !important;
+}
+
+#delete-contract {
+    background: #dc3545 !important;
+}
+
+#delete-contract:hover {
+    background: #c82333 !important;
+}
+
+#cancel-contract-details {
+    background: #6c757d !important;
+}
+
+#cancel-contract-details:hover {
+    background: #545b62 !important;
+}
+
+/* Unified Contract Form Styles */
+.unified-contract-form {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.unified-contract-form h3 {
+    color: #0066cc;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e7f3ff;
+    padding-bottom: 10px;
+}
+
+.unified-contract-form .form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.unified-contract-form .form-group {
+    flex: 1;
+}
+
+.unified-contract-form .form-group.half-width {
+    flex: 0 0 48%;
+}
+
+.unified-contract-form input[readonly] {
+    background-color: #e9ecef;
+    opacity: 1;
+}
+
+.unified-contract-form .mode-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.unified-contract-form .mode-actions.hidden {
+    display: none;
+}
+
+/* Mode-specific button styling */
+.unified-contract-form .create-actions .btn-primary {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.unified-contract-form .create-actions .btn-primary:hover {
+    background: #218838;
+    border-color: #1e7e34;
+}
+
+.unified-contract-form .edit-actions .btn-primary {
+    background: #007bff;
+    border-color: #007bff;
+}
+
+.unified-contract-form .edit-actions .btn-primary:hover {
+    background: #0056b3;
+    border-color: #004085;
+}
+
+/* Danger Zone Styling */
+.danger-zone {
+    border: 2px solid #dc3545 !important;
+    border-radius: 8px !important;
+    background-color: #fff5f5 !important;
+    margin-top: 30px !important;
+}
+
+.danger-zone h3 {
+    border-bottom: 1px solid #dc3545;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+/* Nuclear Delete Button */
+.nuclear-delete-btn {
+    background: #dc3545;
+    color: white;
+    border: 2px solid #dc3545;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.nuclear-delete-btn:hover {
+    background: #c82333;
+    border-color: #bd2130;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.nuclear-delete-btn:active {
+    transform: scale(0.98);
+}

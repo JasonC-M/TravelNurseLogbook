@@ -1,0 +1,93 @@
+<!-- Profile Content -->
+<div class="profile-header">
+  <h2>User Profile</h2>
+  <button id="close-profile" class="close-btn">&times;</button>
+</div>
+
+<div class="profile-content">
+    <div id="profile-loading" class="loading">Loading profile...</div>
+    
+    <div id="profile-data" style="display: none;">
+      <!-- Account Information -->
+      <div class="profile-section">
+        <h3>Account Information</h3>
+        <div class="profile-field">
+          <label>User ID:</label>
+          <div id="user-id" class="readonly-field"></div>
+        </div>
+        <div class="profile-field">
+          <label>Email:</label>
+          <div id="email-display"></div>
+        </div>
+        <div class="profile-field">
+          <label>Account Created:</label>
+          <div id="account-created"></div>
+        </div>
+      </div>
+
+      <!-- Personal Information -->
+      <div class="profile-section">
+        <h3>Personal Information</h3>
+        <div class="profile-field">
+          <label>First Name:</label>
+          <input type="text" id="first-name" disabled>
+          <button data-field="first-name" class="edit-btn">Edit</button>
+        </div>
+        <div class="profile-field">
+          <label>Last Name:</label>
+          <input type="text" id="last-name" disabled>
+          <button data-field="last-name" class="edit-btn">Edit</button>
+        </div>
+        <div class="profile-field">
+          <label>Full Name:</label>
+          <input type="text" id="full-name" disabled>
+          <button data-field="full-name" class="edit-btn">Edit</button>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="profile-section">
+        <h3>Logbook Statistics</h3>
+        <div class="profile-field">
+          <label>Total Contracts:</label>
+          <span id="total-contracts">0</span>
+        </div>
+        <div class="profile-field">
+          <label>Active Contracts:</label>
+          <span id="active-contracts">0</span>
+        </div>
+        <div class="profile-field">
+          <label>Completed Contracts:</label>
+          <span id="completed-contracts">0</span>
+        </div>
+      </div>
+
+      <!-- Manual Profile Completion -->
+      <div class="profile-section">
+        <h3>Profile Status</h3>
+        <button id="mark-profile-complete" class="edit-btn" style="background: #28a745; padding: 8px 16px;">
+          Mark Profile as Complete
+        </button>
+        <small style="display: block; margin-top: 5px; color: #666;">
+          Click this if all fields are filled but the system still asks you to complete your profile.
+        </small>
+      </div>
+    </div>
+    
+    <!-- Danger Zone -->
+    <div class="profile-section danger-zone">
+      <h3 style="color: #dc3545;">⚠️ Danger Zone</h3>
+      <div class="profile-field">
+        <p style="color: #666; margin-bottom: 10px;">
+          <strong>Warning:</strong> This action will permanently delete your entire account, 
+          all profile data, contract history, and cannot be undone.
+        </p>
+        <button id="nuclear-delete-btn" class="nuclear-delete-btn" type="button">
+          🗑️ DELETE EVERYTHING
+        </button>
+      </div>
+    </div>
+
+  <div id="profile-error" class="error-message" style="display: none;"></div>
+  <div id="profile-success" class="success-message" style="display: none;"></div>
+</div>
