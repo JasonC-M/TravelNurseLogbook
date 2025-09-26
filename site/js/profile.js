@@ -46,29 +46,23 @@ class ProfileManager {
       const emailName = user.email.split('@')[0];
       
       const initialProfile = {
-        user_id: user.id,
         email: user.email,
         first_name: metadata.first_name || '',
         last_name: metadata.last_name || '', 
         full_name: metadata.full_name || metadata.name || emailName,
         profile_complete: false,
-        first_login: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        first_login: true
       };
 
-      const { data, error } = await window.supabaseClient
-        .from('user_profiles')
-        .insert(initialProfile)
-        .select()
-        .single();
+      const result = await window.apiClient.createProfile(initialProfile);
 
-      if (error) {
-        return null;
+      if (result.success) {
+        return result.data.profile;
       }
 
-      return data;
+      return null;
     } catch (error) {
+      console.error('Error creating initial profile:', error);
       return null;
     }
   }
@@ -106,8 +100,8 @@ class ProfileManager {
         return;
       }
 
-      if (!window.supabaseClient) {
-        console.log('⏳ Supabase not ready, retrying in 1s...');
+      if (!window.apiClient) {
+        console.log('⏳ API client not ready, retrying in 1s...');
         setTimeout(() => this.loadProfileData(), 1000);
         return;
       }
@@ -118,38 +112,32 @@ class ProfileManager {
         return;
       }
 
-      // Load profile data from database
+      // Load profile data from API
       try {
-        const { data: profileData, error } = await window.supabaseClient
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          this.userProfile = null;
-        } else if (profileData) {
-          this.userProfile = profileData;
+        const result = await window.apiClient.getProfile();
+        
+        if (result.success && result.data.profile) {
+          this.userProfile = result.data.profile;
         } else {
+          // No profile exists, create initial profile
           this.userProfile = await this.createInitialProfile(user);
         }
       } catch (profileError) {
+        console.error('Profile load error:', profileError);
         this.userProfile = null;
       }
 
       // Load contracts data
       try {
-        const { data: contractsData, error } = await window.supabaseClient
-          .from('contracts')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) {
-          this.userContracts = [];
+        const result = await window.apiClient.getContracts();
+        
+        if (result.success) {
+          this.userContracts = result.data.contracts || [];
         } else {
-          this.userContracts = contractsData || [];
+          this.userContracts = [];
         }
       } catch (contractsError) {
+        console.error('Contracts load error:', contractsError);
         this.userContracts = [];
       }
       
@@ -288,62 +276,23 @@ class ProfileManager {
         nuclearBtn.disabled = true;
       }
 
-      // Use server-side function to completely delete everything including auth account
-      console.log('🗑️ Calling server-side complete deletion...');
+      // Use backend API to completely delete everything including auth account
+      console.log('🗑️ Calling backend complete deletion...');
       
-      // Get current session token
-      const { data: { session } } = await window.supabaseClient.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session found');
-      }
-
-      // Call the Edge Function with user's token
-      const response = await fetch(`${window.supabaseClient.supabaseUrl}/functions/v1/delete-user`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-          'apikey': window.supabaseClient.supabaseKey
-        }
-      });
-
-      const result = await response.json();
+      const result = await window.apiClient.deleteProfile();
       
       if (!result.success) {
-        throw new Error(result.error || 'Server-side deletion failed');
+        throw new Error(result.error || 'Profile deletion failed');
       }
 
-      console.log('✅ Complete account deletion successful:', result.message);
-
-      // Step 2: Delete user profile
-      console.log('🗑️ Deleting user profile...');
-      const { error: profileError } = await window.supabaseClient
-        .from('user_profiles')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (profileError) {
-        console.error('Error deleting profile:', profileError);
-        throw new Error('Failed to delete user profile: ' + profileError.message);
-      } else {
-        console.log('✅ User profile deleted successfully');
-      }
-
-      // Step 3: Sign out user (client-side can't delete auth accounts)
-      console.log('� Signing out user...');
-      const { error: signOutError } = await window.supabaseClient.auth.signOut();
-      
-      if (signOutError) {
-        console.error('Error signing out:', signOutError);
-      }
+      console.log('✅ Complete account deletion successful');
 
       // Clear local data and force logout
       sessionStorage.clear();
       localStorage.clear();
       
       // Force logout and redirect immediately
-      await window.supabaseClient.auth.signOut();
+      await window.auth.signOut();
       window.location.href = 'index.html';
 
     } catch (error) {
@@ -400,31 +349,26 @@ class ProfileManager {
       
       // Prepare complete profile update data
       const profileUpdateData = {
-        user_id: user.id,
         first_name: this.userProfile.first_name || '',
         last_name: this.userProfile.last_name || '',
         full_name: this.userProfile.full_name || '',
         email: this.userProfile.email || user.email,
         [dbFieldName]: field.value.trim(),
         profile_complete: profileComplete,
-        first_login: false,
-        updated_at: new Date().toISOString()
+        first_login: false
       };
       
-      // Try to update existing profile or create new one
-      const { data, error } = await window.supabaseClient
-        .from('user_profiles')
-        .upsert(profileUpdateData)
-        .select();
+      // Try to update profile via API
+      const result = await window.apiClient.updateProfile(profileUpdateData);
 
-      if (error) {
-        this.showProfileError('Failed to save: ' + error.message);
+      if (!result.success) {
+        this.showProfileError('Failed to save: ' + result.error);
         return;
       }
 
       // Update local cache with returned data
-      if (data && data[0]) {
-        this.userProfile = { ...this.userProfile, ...data[0] };
+      if (result.data && result.data.profile) {
+        this.userProfile = { ...this.userProfile, ...result.data.profile };
       }
       
       // Sync important fields with Supabase auth user metadata
@@ -463,7 +407,7 @@ class ProfileManager {
   async syncWithAuthMetadata(fieldId, value) {
     try {
       const user = window.auth.getCurrentUser();
-      if (!user || !window.supabaseClient) return;
+      if (!user || !window.apiClient) return;
 
       // Determine what metadata to update based on the field
       let metadataUpdate = {};
@@ -493,17 +437,10 @@ class ProfileManager {
           return; // Don't update metadata for email changes
       }
 
-      // Update user metadata if we have data to update
+      // Note: Metadata sync is now handled by the backend API
+      // No direct Supabase auth metadata updates needed from frontend
       if (Object.keys(metadataUpdate).length > 0) {
-        const { error } = await window.supabaseClient.auth.updateUser({
-          data: metadataUpdate
-        });
-
-        if (error) {
-          console.error('Metadata sync error:', error);
-        } else {
-          console.log(`✅ Synced ${fieldId} with auth metadata`);
-        }
+        console.log(`✅ Profile field ${fieldId} will be synced by backend`);
       }
     } catch (error) {
       console.error('Auth metadata sync failed:', error);
@@ -536,29 +473,24 @@ class ProfileManager {
 
       // Force update profile with completion status
       const profileUpdateData = {
-        user_id: user.id,
         first_name: firstName,
         last_name: lastName,
         full_name: fullName,
         email: user.email,
         profile_complete: true,
-        first_login: false,
-        updated_at: new Date().toISOString()
+        first_login: false
       };
 
-      const { data, error } = await window.supabaseClient
-        .from('user_profiles')
-        .upsert(profileUpdateData)
-        .select();
+      const result = await window.apiClient.updateProfile(profileUpdateData);
 
-      if (error) {
-        this.showProfileError('Failed to update profile: ' + error.message);
+      if (!result.success) {
+        this.showProfileError('Failed to update profile: ' + result.error);
         return;
       }
 
       // Update local cache
-      if (data && data[0]) {
-        this.userProfile = { ...this.userProfile, ...data[0] };
+      if (result.data && result.data.profile) {
+        this.userProfile = { ...this.userProfile, ...result.data.profile };
       }
 
       this.showProfileSuccess('✅ Profile marked as complete! The system will no longer prompt you to complete it.');

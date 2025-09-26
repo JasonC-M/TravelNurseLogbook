@@ -1,14 +1,19 @@
-// Supabase Configuration
-// Replace these with your actual Supabase project details
-// You can find these in your Supabase dashboard under Settings > API
+// Supabase Configuration - DEPRECATED
+// This file is no longer used in the application.
+// All database operations now go through the secure backend API.
+// 
+// The frontend no longer connects directly to Supabase.
+// Authentication, profile management, and contract operations
+// are handled by the backend Express.js API with proper security.
+//
+// This file is kept for reference only.
 
-const SUPABASE_CONFIG = {
-    url: 'https://kcyrtbkecctthqkqrhkc.supabase.co', // e.g., 'https://your-project-id.supabase.co'
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjeXJ0YmtlY2N0dGhxa3FyaGtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NjU5MjgsImV4cCI6MjA3NDI0MTkyOH0.8I78SkFvvxZ8wUXyvbSpvvwYndTFgA9ky-s09FhpDS8' // Your public anon key from Supabase dashboard
-};
+console.warn('supabase_config.js is deprecated. Remove references to this file.');
 
-// Initialize Supabase client
-const supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-
-// Export for use in other files
-window.supabaseClient = supabaseClient;
+// Legacy configuration (no longer used):
+// const SUPABASE_CONFIG = {
+//     url: 'https://kcyrtbkecctthqkqrhkc.supabase.co',
+//     anonKey: '[REMOVED FOR SECURITY]'
+// };
+//
+// window.supabaseClient = null; // No longer initialized
