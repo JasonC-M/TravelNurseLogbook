@@ -142,14 +142,8 @@
           </div>
         </div>
 
-        <div style="margin-top: 15px;">
-          <button id="save-map-preferences" class="edit-btn" style="background: #007bff;">
-            Save Map Preferences
-          </button>
-          <button id="reset-map-preferences" class="edit-btn" style="background: #6c757d; margin-left: 10px;">
-            Reset to Default
-          </button>
-          <span id="map-preferences-status" style="margin-left: 15px; font-size: 14px; color: #666;"></span>
+        <div style="margin-top: 15px; padding: 10px; background-color: #f0f8ff; border-radius: 6px; font-size: 14px; color: #666;">
+          <span id="map-preferences-status">Map preferences will be saved with your profile</span>
         </div>
       </div>
 
@@ -163,10 +157,31 @@
           Click this if all fields are filled but the system still asks you to complete your profile.
         </small>
       </div>
+
+      <!-- Save Profile Section -->
+      <div class="profile-section">
+        <div style="text-align: center; padding: 20px;">
+          <button id="save-profile-btn" class="primary-button" style="
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            min-width: 200px;
+          ">
+            💾 Save Profile
+          </button>
+          <div id="profile-save-status" style="margin-top: 15px; font-size: 14px; min-height: 20px;"></div>
+        </div>
+      </div>
     </div>
     
     <!-- Danger Zone -->
-    <div class="profile-section danger-zone">
+    <div class="profile-section danger-zone" style="margin-top: 30px;">
       <h3 style="color: #dc3545;">⚠️ Danger Zone</h3>
       <div class="profile-field">
         <p style="color: #666; margin-bottom: 10px;">

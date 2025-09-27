@@ -412,6 +412,11 @@ html, body {
     border: 1px solid #e9ecef;
 }
 
+/* Save Profile Button */
+#save-profile-btn:hover {
+    background: #1e7e34 !important;
+}
+
 .edit-btn {
     background: #007bff;
     color: white;
