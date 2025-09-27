@@ -31,6 +31,111 @@ function getUserMapPreferences() {
     };
 }
 
+// Filter contracts based on user's regional preferences
+function filterContractsByUserPreferences(contracts) {
+    if (!contracts || contracts.length === 0) {
+        return [];
+    }
+
+    const userPrefs = getUserMapPreferences();
+    console.log('🔍 Filtering contracts with preferences:', userPrefs);
+    console.log('🔍 Total contracts to filter:', contracts.length);
+
+    const filteredContracts = contracts.filter(contract => {
+        let lat = parseFloat(contract.latitude);
+        let lng = parseFloat(contract.longitude);
+        
+        if (isNaN(lat) || isNaN(lng)) {
+            return false; // Skip invalid coordinates
+        }
+
+        // Normalize Pacific coordinates consistently
+        if (lng > 0 && lng <= 180) {
+            lng = lng - 360;
+        }
+
+        // CONUS (Continental US): roughly 25-49°N, -125 to -66°W
+        if (lat >= 25 && lat <= 49 && lng >= -125 && lng <= -66) {
+            return userPrefs.conus;
+        }
+        
+        // Alaska: roughly 55-72°N, -180 to -140°W
+        if (lat >= 55 && lat <= 72 && lng >= -180 && lng <= -140) {
+            return userPrefs.alaska;
+        }
+        
+        // Hawaii: roughly 18-23°N, -162 to -154°W
+        if (lat >= 18 && lat <= 23 && lng >= -162 && lng <= -154) {
+            return userPrefs.hawaii;
+        }
+        
+        // Puerto Rico: roughly 17.8-18.6°N, -67.3 to -65.2°W
+        if (lat >= 17.8 && lat <= 18.6 && lng >= -67.3 && lng <= -65.2) {
+            return userPrefs['puerto-rico'];
+        }
+        
+        // US Virgin Islands: roughly 17.6-18.4°N, -65.1 to -64.5°W
+        if (lat >= 17.6 && lat <= 18.4 && lng >= -65.1 && lng <= -64.5) {
+            return userPrefs['us-virgin-islands'];
+        }
+        
+        // Guam: roughly 13.2-13.7°N, 144.6-145.0°E (normalized to negative)
+        if (lat >= 13.2 && lat <= 13.7 && lng >= -215.4 && lng <= -215.0) {
+            return userPrefs.guam;
+        }
+        
+        // American Samoa: roughly 14.1-14.4°S, -171.1 to -169.4°W
+        if (lat >= -14.4 && lat <= -14.1 && lng >= -171.1 && lng <= -169.4) {
+            return userPrefs['american-samoa'];
+        }
+        
+        // Northern Mariana Islands: roughly 14.1-20.6°N, 144.9-146.1°E (normalized)
+        if (lat >= 14.1 && lat <= 20.6 && lng >= -215.1 && lng <= -213.9) {
+            return userPrefs['northern-mariana'];
+        }
+        
+        // Canada: roughly 41.7-83.1°N, -141.0 to -52.6°W
+        if (lat >= 41.7 && lat <= 83.1 && lng >= -141.0 && lng <= -52.6) {
+            return userPrefs.canada;
+        }
+        
+        // Mexico & Central America: roughly 14.5-32.7°N, -118.4 to -86.7°W
+        if (lat >= 14.5 && lat <= 32.7 && lng >= -118.4 && lng <= -86.7) {
+            return userPrefs.mexico;
+        }
+        
+        // Caribbean (non-US): roughly 10.0-27.0°N, -85.0 to -59.0°W (excluding US territories)
+        if (lat >= 10.0 && lat <= 27.0 && lng >= -85.0 && lng <= -59.0) {
+            if ((lat >= 17.6 && lat <= 18.6 && lng >= -67.3 && lng <= -64.5)) return false;
+            return userPrefs.caribbean;
+        }
+        
+        // Europe: roughly 35.0-71.0°N, -25.0 to 45.0°E
+        if (lat >= 35.0 && lat <= 71.0 && lng >= -25.0 && lng <= 45.0) {
+            return userPrefs.europe;
+        }
+        
+        // Asia & Pacific: roughly -50.0-80.0°N, 60.0-180.0°E (normalized to negative for Pacific)
+        if ((lat >= -50.0 && lat <= 80.0 && lng >= 60.0 && lng <= 180.0) ||
+            (lat >= -50.0 && lat <= 80.0 && lng >= -180.0 && lng <= -120.0)) {
+            return userPrefs['asia-pacific'];
+        }
+        
+        // Other International (catch-all for anywhere else)
+        return userPrefs['other-international'];
+    });
+
+    console.log(`🎯 Filtered ${contracts.length} contracts down to ${filteredContracts.length} based on user preferences`);
+    
+    // Debug: Show which contracts are included vs excluded
+    const includedContracts = filteredContracts.map(c => `${c.hospital_name} (${c.latitude}, ${c.longitude})`);
+    const excludedContracts = contracts.filter(c => !filteredContracts.includes(c)).map(c => `${c.hospital_name} (${c.latitude}, ${c.longitude})`);
+    console.log('✅ Included contracts:', includedContracts);
+    console.log('❌ Excluded contracts:', excludedContracts);
+    
+    return filteredContracts;
+}
+
 // Initialize map with layer control
 function initializeMap() {
     contractMap = L.map('map').setView([39.8283, -98.5795], 5); // Centered on US
@@ -106,160 +211,76 @@ function createCustomMapIcon() {
 // Calculate smart map bounds for all contract locations
 function calculateSmartMapBounds(contracts) {
     if (!contracts || contracts.length === 0) {
-        // Default CONUS view
+        console.log('🗺️ No contracts provided - using default CONUS view');
         return {
             center: [39.8283, -98.5795],
             zoom: 4
         };
     }
 
-    // Extract valid coordinates with Pacific normalization
+    console.log('📍 Calculating smart bounds to fit actual contract circles');
+
+    // Use filtering to only consider contracts from preferred regions for smart zoom
+    const filteredContracts = filterContractsByUserPreferences(contracts);
+
+    if (filteredContracts.length === 0) {
+        console.log('🗺️ No contracts match user preferences - using default CONUS view');
+        return {
+            center: [39.8283, -98.5795],
+            zoom: 4
+        };
+    }
+
+    if (filteredContracts.length === 1) {
+        const contract = filteredContracts[0];
+        let lat = parseFloat(contract.latitude);
+        let lng = parseFloat(contract.longitude);
+        
+        // Normalize Pacific coordinates
+        if (lng > 0 && lng <= 180) {
+            lng = lng - 360;
+        }
+        
+        console.log(`🎯 Single contract zoom: ${lat}, ${lng}`);
+        return {
+            center: [lat, lng],
+            zoom: 8
+        };
+    }
+
+    // Extract valid coordinates with Pacific normalization from filtered contracts
     const validCoords = [];
-    contracts.forEach(contract => {
+    filteredContracts.forEach(contract => {
         let lat = parseFloat(contract.latitude);
         let lng = parseFloat(contract.longitude);
         if (!isNaN(lat) && !isNaN(lng)) {
             // Normalize Pacific coordinates to appear west of Americas
-            // Convert positive Pacific longitudes to negative equivalent
             if (lng > 0 && lng <= 180) {
-                lng = lng - 360; // e.g., Guam 144.8°E becomes -215.2°W
-                console.log(`🌏 Using ${filteredCoords.length} filtered contracts out of ${validCoords.length} total for map centering`);
-
-    // Check if user has any regions selected (not all false)
-    const hasAnyRegionsSelected = Object.values(userPrefs).some(pref => pref === true);
-    
-    // Determine coordinates to use based on smart zoom rules:
-    // 1. If no regions selected -> use CONUS default
-    // 2. If regions selected but no contracts in those regions -> use CONUS default  
-    // 3. If regions selected and contracts exist -> use filtered contracts
-    let coordsToUse;
-    if (!hasAnyRegionsSelected || filteredCoords.length === 0) {
-        console.log(`🎯 Smart zoom: ${!hasAnyRegionsSelected ? 'No regions selected' : 'No contracts in selected regions'} - defaulting to CONUS view`);
-        return {
-            center: [39.8283, -98.5795], // CONUS center
-            zoom: 4
-        };
-    } else {
-        coordsToUse = filteredCoords;
-        console.log(`🎯 Smart zoom: Using ${coordsToUse.length} contracts in selected regions`);
-    }
+                lng = lng - 360;
             }
             validCoords.push([lat, lng]);
         }
     });
 
     if (validCoords.length === 0) {
-        // Default CONUS view if no valid coordinates
+        console.log('🗺️ No valid coordinates in filtered contracts');
         return {
             center: [39.8283, -98.5795],
             zoom: 4
         };
     }
 
-    if (validCoords.length === 1) {
-        // Single contract - center on it with regional zoom
-        return {
-            center: validCoords[0],
-            zoom: 6
-        };
-    }
+    // Calculate bounds for valid coordinates
+    let minLat = Math.min(...validCoords.map(coord => coord[0]));
+    let maxLat = Math.max(...validCoords.map(coord => coord[0]));
+    let minLng = Math.min(...validCoords.map(coord => coord[1]));
+    let maxLng = Math.max(...validCoords.map(coord => coord[1]));
 
-    // Get user preferences for which regions to include in smart zoom
-    const userPrefs = getUserMapPreferences();
-    
-    // Filter coordinates based on user preferences
-    const filteredCoords = validCoords.filter(coord => {
-        const lat = coord[0];
-        const lng = coord[1];
-        
-        // CONUS (Continental US): roughly 25-49°N, -125 to -66°W
-        if (lat >= 25 && lat <= 49 && lng >= -125 && lng <= -66) {
-            return userPrefs.conus;
-        }
-        
-        // Alaska: roughly 55-72°N, -180 to -140°W
-        if (lat >= 55 && lat <= 72 && lng >= -180 && lng <= -140) {
-            return userPrefs.alaska;
-        }
-        
-        // Hawaii: roughly 18-23°N, -162 to -154°W
-        if (lat >= 18 && lat <= 23 && lng >= -162 && lng <= -154) {
-            return userPrefs.hawaii;
-        }
-        
-        // Puerto Rico: roughly 17.8-18.6°N, -67.3 to -65.2°W
-        if (lat >= 17.8 && lat <= 18.6 && lng >= -67.3 && lng <= -65.2) {
-            return userPrefs['puerto-rico'];
-        }
-        
-        // US Virgin Islands: roughly 17.6-18.4°N, -65.1 to -64.5°W
-        if (lat >= 17.6 && lat <= 18.4 && lng >= -65.1 && lng <= -64.5) {
-            return userPrefs['us-virgin-islands'];
-        }
-        
-        // Guam: roughly 13.2-13.7°N, 144.6-145.0°E (normalized to negative)
-        if (lat >= 13.2 && lat <= 13.7 && lng >= -215.4 && lng <= -215.0) {
-            return userPrefs.guam;
-        }
-        
-        // American Samoa: roughly 14.1-14.4°S, -171.1 to -169.4°W
-        if (lat >= -14.4 && lat <= -14.1 && lng >= -171.1 && lng <= -169.4) {
-            return userPrefs['american-samoa'];
-        }
-        
-        // Northern Mariana Islands: roughly 14.1-20.6°N, 144.9-146.1°E (normalized)
-        if (lat >= 14.1 && lat <= 20.6 && lng >= -215.1 && lng <= -213.9) {
-            return userPrefs['northern-mariana'];
-        }
-        
-        // Canada: roughly 41.7-83.1°N, -141.0 to -52.6°W
-        if (lat >= 41.7 && lat <= 83.1 && lng >= -141.0 && lng <= -52.6) {
-            return userPrefs.canada;
-        }
-        
-        // Mexico & Central America: roughly 14.5-32.7°N, -118.4 to -86.7°W
-        if (lat >= 14.5 && lat <= 32.7 && lng >= -118.4 && lng <= -86.7) {
-            return userPrefs.mexico;
-        }
-        
-        // Caribbean (non-US): roughly 10.0-27.0°N, -85.0 to -59.0°W (excluding US territories)
-        if (lat >= 10.0 && lat <= 27.0 && lng >= -85.0 && lng <= -59.0) {
-            // Exclude areas already covered by US territories
-            if ((lat >= 17.6 && lat <= 18.6 && lng >= -67.3 && lng <= -64.5)) return false; // US territories
-            return userPrefs.caribbean;
-        }
-        
-        // Europe: roughly 35.0-71.0°N, -25.0 to 45.0°E
-        if (lat >= 35.0 && lat <= 71.0 && lng >= -25.0 && lng <= 45.0) {
-            return userPrefs.europe;
-        }
-        
-        // Asia & Pacific: roughly -50.0-80.0°N, 60.0-180.0°E (normalized to negative for Pacific)
-        if ((lat >= -50.0 && lat <= 80.0 && lng >= 60.0 && lng <= 180.0) ||
-            (lat >= -50.0 && lat <= 80.0 && lng >= -180.0 && lng <= -120.0)) {
-            return userPrefs['asia-pacific'];
-        }
-        
-        // Other International (catch-all for anywhere else)
-        return userPrefs['other-international'];
-    });
-
-    console.log(`�🇸 Using ${filteredCoords.length} US territory contracts out of ${validCoords.length} total for map centering`);
-
-    // If no US territory contracts, fall back to all contracts
-    const coordsToUse = filteredCoords.length > 0 ? filteredCoords : validCoords;
-
-    // Determine geographic extent based on CONUS contracts only
-    let minLat = Math.min(...coordsToUse.map(coord => coord[0]));
-    let maxLat = Math.max(...coordsToUse.map(coord => coord[0]));
-    let minLng = Math.min(...coordsToUse.map(coord => coord[1]));
-    let maxLng = Math.max(...coordsToUse.map(coord => coord[1]));
-
-    // Add padding for CONUS-focused view
+    // Add tighter padding to bring contracts closer to panel edges
     const latSpan = maxLat - minLat;
     const lngSpan = maxLng - minLng;
-    const latPadding = Math.max(latSpan * 0.05, 1); // Smaller padding: 5% or 1 degree minimum
-    const lngPadding = Math.max(lngSpan * 0.05, 1.5); // Smaller padding: 5% or 1.5 degrees minimum
+    const latPadding = Math.max(latSpan * 0.05, 0.2);  // 5% padding or 0.2 degree minimum
+    const lngPadding = Math.max(lngSpan * 0.05, 0.3);  // 5% padding or 0.3 degree minimum
 
     minLat -= latPadding;
     maxLat += latPadding;
@@ -272,7 +293,12 @@ function calculateSmartMapBounds(contracts) {
         [maxLat, maxLng]
     ]);
 
-    return { bounds };
+    console.log(`🗺️ Smart bounds calculated to fit ${filteredContracts.length} contract circles:`, {
+        minLat, maxLat, minLng, maxLng
+    });
+    console.log('📍 Contract locations included in bounds:', filteredContracts.map(c => `${c.hospital_name} (${c.latitude}, ${c.longitude})`));
+
+    return { bounds }
 }
 
 // Detect and filter extreme geographic outliers to prevent world-spanning zooms
@@ -344,12 +370,13 @@ function fitMapToAllContracts(contracts, animate = true) {
     const viewSettings = calculateSmartMapBounds(contracts);
 
     if (viewSettings.bounds) {
-        // Use fitBounds for multiple contracts with tighter zoom
+        // Use fitBounds for multiple contracts with dynamic zoom
         const options = {
             animate: animate,
-            padding: [10, 10], // Smaller padding for tighter zoom
-            maxZoom: 7 // Allow closer zoom for better detail
+            padding: [20, 20] // Smaller padding to bring contracts closer to panel edges
+            // No maxZoom - let Leaflet calculate the optimal zoom dynamically
         };
+        console.log('🗺️ Fitting bounds with padding for filtered contracts');
         contractMap.fitBounds(viewSettings.bounds, options);
     } else {
         // Use setView for single contract or default view
@@ -498,10 +525,19 @@ function refreshContractMarkers(contracts) {
             addContractToMap(contract);
         });
         
-        // Auto-fit map to show all contracts after a brief delay
-        setTimeout(() => {
-            fitMapToAllContracts(contracts, true);
-        }, 100);
+        // Wait for profile manager to be available before smart zoom
+        const attemptSmartZoom = () => {
+            if (window.profileManager && window.profileManager.getMapPreferences) {
+                console.log('✅ Profile manager available - proceeding with smart zoom');
+                fitMapToAllContracts(contracts, true);
+            } else {
+                console.log('⏳ Profile manager not ready yet - retrying...');
+                setTimeout(attemptSmartZoom, 100);
+            }
+        };
+        
+        // Start trying after a brief delay
+        setTimeout(attemptSmartZoom, 100);
     } else {
         // No contracts - show default CONUS view
         if (contractMap) {

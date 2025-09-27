@@ -847,13 +847,13 @@ class ProfileManager {
   // Get current map preferences for other modules
   getMapPreferences() {
     if (!this.userProfile || !this.userProfile.map_preferences) {
-      // Return default preferences
+      // Return default preferences - only CONUS enabled by default
       return {
         conus: true,
-        alaska: true,
-        hawaii: true,
-        'puerto-rico': true,
-        'us-virgin-islands': true,
+        alaska: false,
+        hawaii: false,
+        'puerto-rico': false,
+        'us-virgin-islands': false,
         guam: false,
         'american-samoa': false,
         'northern-mariana': false,

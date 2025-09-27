@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Map Filtering</title>
+</head>
+<body>
+    <h1>Debug Map Filtering</h1>
+    <button onclick="testFiltering()">Test Contract Filtering</button>
+    <div id="results"></div>
+
+    <script>
+        // Mock contracts for testing
+        const testContracts = [
+            { id: 1, latitude: 40.7128, longitude: -74.0060, facility: "NYC Hospital" },           // CONUS
+            { id: 2, latitude: 61.2181, longitude: -149.9003, facility: "Alaska Hospital" },        // Alaska  
+            { id: 3, latitude: 21.3099, longitude: -157.8581, facility: "Hawaii Hospital" },        // Hawaii
+            { id: 4, latitude: 18.2208, longitude: -66.5901, facility: "Puerto Rico Hospital" },    // Puerto Rico
+            { id: 5, latitude: 18.0734, longitude: -64.8963, facility: "Virgin Islands Hospital" }, // Virgin Islands
+            { id: 6, latitude: 13.4443, longitude: 144.7937, facility: "Guam Hospital" },           // Guam (Pacific)
+            { id: 7, latitude: -14.3064, longitude: -170.7032, facility: "American Samoa Hospital" }, // American Samoa
+        ];
+
+        // Mock preferences - what user currently has selected
+        const mockPreferences = {
+            conus: true,
+            alaska: true,
+            hawaii: true,
+            'puerto-rico': true,
+            'us-virgin-islands': true,
+            guam: false,
+            'american-samoa': false,
+            'northern-mariana': false,
+            canada: false,
+            mexico: false,
+            caribbean: false,
+            europe: false,
+            'asia-pacific': false,
+            'other-international': false
+        };
+
+        function testFiltering() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Filtering Test Results:</h2>';
+            
+            console.log('🧪 Testing contract filtering...');
+            
+            testContracts.forEach(contract => {
+                let lat = parseFloat(contract.latitude);
+                let lng = parseFloat(contract.longitude);
+                
+                // Normalize Pacific coordinates
+                if (lng > 0 && lng <= 180) {
+                    lng = lng - 360;
+                }
+                
+                let shouldShow = false;
+                let region = 'Unknown';
+                
+                // Apply the same filtering logic as the map
+                if (lat >= 25 && lat <= 49 && lng >= -125 && lng <= -66) {
+                    shouldShow = mockPreferences.conus;
+                    region = 'CONUS';
+                } else if (lat >= 55 && lat <= 72 && lng >= -180 && lng <= -140) {
+                    shouldShow = mockPreferences.alaska;
+                    region = 'Alaska';
+                } else if (lat >= 18 && lat <= 23 && lng >= -162 && lng <= -154) {
+                    shouldShow = mockPreferences.hawaii;
+                    region = 'Hawaii';
+                } else if (lat >= 17.8 && lat <= 18.6 && lng >= -67.3 && lng <= -65.2) {
+                    shouldShow = mockPreferences['puerto-rico'];
+                    region = 'Puerto Rico';
+                } else if (lat >= 17.6 && lat <= 18.4 && lng >= -65.1 && lng <= -64.5) {
+                    shouldShow = mockPreferences['us-virgin-islands'];
+                    region = 'US Virgin Islands';
+                } else if (lat >= 13.2 && lat <= 13.7 && lng >= -215.4 && lng <= -215.0) {
+                    shouldShow = mockPreferences.guam;
+                    region = 'Guam';
+                } else if (lat >= -14.4 && lat <= -14.1 && lng >= -171.1 && lng <= -169.4) {
+                    shouldShow = mockPreferences['american-samoa'];
+                    region = 'American Samoa';
+                }
+                
+                const status = shouldShow ? '✅ VISIBLE' : '❌ HIDDEN';
+                const color = shouldShow ? 'green' : 'red';
+                
+                results.innerHTML += `
+                    <div style="color: ${color}; margin: 10px 0;">
+                        <strong>${contract.facility}</strong><br>
+                        Coordinates: ${contract.latitude}, ${contract.longitude} (normalized: ${lat}, ${lng})<br>
+                        Region: ${region}<br>
+                        Status: ${status}
+                    </div>
+                `;
+                
+                console.log(`${status} ${contract.facility} (${region}) - ${contract.latitude}, ${contract.longitude}`);
+            });
+        }
+    </script>
+</body>
+</html>
