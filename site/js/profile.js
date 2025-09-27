@@ -709,11 +709,19 @@ class ProfileManager {
     // Update unified save button and status
     if (profileSaveBtn && profileStatusEl) {
       if (this.hasUnsavedMapChanges) {
-        profileSaveBtn.style.background = '#dc3545'; // Red to indicate action needed
+        // Remove primary class and add danger class for red state
+        profileSaveBtn.className = 'danger-btn';
+        profileSaveBtn.style.minWidth = '200px';
+        profileSaveBtn.style.fontSize = '16px';
+        profileSaveBtn.style.padding = '12px 30px';
         profileSaveBtn.textContent = '⚠️ Save Profile (Unsaved Changes)';
         profileStatusEl.innerHTML = '<span style="color: #dc3545;">You have unsaved map preference changes</span>';
       } else {
-        profileSaveBtn.style.background = '#28a745'; // Green normal state
+        // Reset to primary class for green state
+        profileSaveBtn.className = 'primary-btn';
+        profileSaveBtn.style.minWidth = '200px';
+        profileSaveBtn.style.fontSize = '16px';
+        profileSaveBtn.style.padding = '12px 30px';
         profileSaveBtn.textContent = '💾 Save Profile';
         profileStatusEl.innerHTML = '<span style="color: #28a745;">All changes saved</span>';
       }
