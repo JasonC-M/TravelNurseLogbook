@@ -7,6 +7,8 @@ class ProfileManager {
     this.userContracts = [];
     this.isProfileOpen = false;
     this.mapPreferencesLoaded = false;
+    this.hasUnsavedMapChanges = false;
+    this.originalMapPreferences = null;
     this.initializeEventHandlers();
   }
 
@@ -14,6 +16,9 @@ class ProfileManager {
   initializeEventHandlers() {
     // Setup close button after a delay to ensure components are loaded
     setTimeout(() => this.setupCloseButton(), 2000);
+    
+    // Setup navigation warning for unsaved changes
+    this.setupNavigationWarning();
   }
 
   // Setup close button event handler
@@ -38,6 +43,18 @@ class ProfileManager {
       });
       console.log('💣 Nuclear delete button handler attached');
     }
+  }
+
+  // Setup navigation warning for unsaved changes
+  setupNavigationWarning() {
+    window.addEventListener('beforeunload', (event) => {
+      if (this.hasUnsavedMapChanges) {
+        const message = 'You have unsaved map preference changes. Are you sure you want to leave?';
+        event.preventDefault();
+        event.returnValue = message; // Required for Chrome
+        return message; // Required for other browsers
+      }
+    });
   }
 
   // Create initial profile for new users
@@ -239,6 +256,14 @@ class ProfileManager {
 
   // Close profile menu
   closeProfile() {
+    // Check for unsaved changes before closing
+    if (this.hasUnsavedMapChanges) {
+      const confirmClose = confirm('You have unsaved map preference changes. Are you sure you want to close without saving?');
+      if (!confirmClose) {
+        return; // Don't close if user cancels
+      }
+    }
+
     const slideout = document.getElementById('profile-slideout');
     if (!slideout) {
       console.warn('⚠️ Profile slideout not found during close');
@@ -365,10 +390,7 @@ class ProfileManager {
         first_login: false
       };
 
-      // Include current map preferences if available
-      if (this.userProfile.map_preferences) {
-        profileUpdateData.map_preferences = this.userProfile.map_preferences;
-      }
+      // Note: Map preferences are saved separately via their own save button
       
       // Try to update profile via API
       const result = await window.apiClient.updateProfile(profileUpdateData);
@@ -595,6 +617,9 @@ class ProfileManager {
       console.log('⚠️ Using default preferences (no saved prefs found)');
     }
 
+    // Store original preferences for change tracking
+    this.originalMapPreferences = { ...mapPrefs };
+    
     // Set checkbox states
     Object.keys(defaultPrefs).forEach(region => {
       const checkbox = document.getElementById(`pref-${region}`);
@@ -605,11 +630,15 @@ class ProfileManager {
       }
     });
 
+    // Reset unsaved changes flag
+    this.hasUnsavedMapChanges = false;
+    this.updateMapPreferencesStatus();
+
     // Setup event handlers for the buttons (one-time setup)
     this.setupMapPreferenceHandlers();
   }
 
-  // Setup event handlers for map preference checkboxes
+  // Setup event handlers for map preference controls
   setupMapPreferenceHandlers() {
     // Avoid duplicate handlers
     if (this.mapHandlersSetup) return;
@@ -621,19 +650,27 @@ class ProfileManager {
       'caribbean', 'europe', 'asia-pacific', 'other-international'
     ];
 
-    // Add change event listeners to all checkboxes for auto-save
+    // Add change event listeners to detect unsaved changes
     regions.forEach(region => {
       const checkbox = document.getElementById(`pref-${region}`);
       if (checkbox) {
         checkbox.addEventListener('change', () => {
-          // Debounce the save to avoid too many API calls
-          clearTimeout(this.mapPreferenceSaveTimeout);
-          this.mapPreferenceSaveTimeout = setTimeout(() => {
-            this.saveMapPreferences();
-          }, 500); // Save 500ms after last change
+          this.detectMapPreferenceChanges();
         });
       }
     });
+
+    // Setup save and reset buttons
+    const saveBtn = document.getElementById('save-map-preferences');
+    const resetBtn = document.getElementById('reset-map-preferences');
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => this.saveMapPreferences());
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => this.resetMapPreferences());
+    }
   }
 
   // Save map preferences to user profile
@@ -665,9 +702,13 @@ class ProfileManager {
         if (!this.userProfile) this.userProfile = {};
         this.userProfile.map_preferences = preferences;
         
+        // Update original preferences to new saved state
+        this.originalMapPreferences = { ...preferences };
+        this.hasUnsavedMapChanges = false;
+        
         console.log('✅ Map preferences saved successfully to backend and local cache');
-        // Show a subtle success indicator instead of full message for auto-save
-        this.showMapPreferenceSaved();
+        this.showProfileSuccess('Map preferences saved successfully!');
+        this.updateMapPreferencesStatus();
         
         // Notify map to update its filtering
         if (window.MapController && window.MapController.updateUserPreferences) {
@@ -684,26 +725,65 @@ class ProfileManager {
 
 
 
-  // Show subtle success indicator for auto-saved map preferences
-  showMapPreferenceSaved() {
-    // Find the map preferences section and show a temporary checkmark
-    const mapSection = document.querySelector('.profile-section h3').closest('.profile-section');
-    if (mapSection) {
-      let indicator = mapSection.querySelector('.auto-save-indicator');
-      if (!indicator) {
-        indicator = document.createElement('span');
-        indicator.className = 'auto-save-indicator';
-        indicator.style.cssText = 'color: #28a745; font-size: 12px; margin-left: 10px; opacity: 0; transition: opacity 0.3s;';
-        mapSection.querySelector('h3').appendChild(indicator);
+  // Detect if map preferences have changed from original
+  detectMapPreferenceChanges() {
+    const regions = [
+      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
+      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
+      'caribbean', 'europe', 'asia-pacific', 'other-international'
+    ];
+
+    let hasChanges = false;
+    regions.forEach(region => {
+      const checkbox = document.getElementById(`pref-${region}`);
+      if (checkbox) {
+        const currentValue = checkbox.checked;
+        const originalValue = this.originalMapPreferences ? this.originalMapPreferences[region] : false;
+        if (currentValue !== originalValue) {
+          hasChanges = true;
+        }
       }
-      
-      indicator.textContent = '✅ Saved';
-      indicator.style.opacity = '1';
-      
-      setTimeout(() => {
-        indicator.style.opacity = '0';
-      }, 2000);
+    });
+
+    this.hasUnsavedMapChanges = hasChanges;
+    this.updateMapPreferencesStatus();
+  }
+
+  // Update the status display for map preferences
+  updateMapPreferencesStatus() {
+    const statusEl = document.getElementById('map-preferences-status');
+    const saveBtn = document.getElementById('save-map-preferences');
+    
+    if (statusEl) {
+      if (this.hasUnsavedMapChanges) {
+        statusEl.innerHTML = '<span style="color: #dc3545;">⚠️ Unsaved changes</span>';
+        if (saveBtn) saveBtn.style.background = '#dc3545'; // Red to indicate action needed
+      } else {
+        statusEl.innerHTML = '<span style="color: #28a745;">✅ All changes saved</span>';
+        if (saveBtn) saveBtn.style.background = '#007bff'; // Blue normal state
+      }
     }
+  }
+
+  // Reset map preferences to default or last saved state
+  resetMapPreferences() {
+    if (this.hasUnsavedMapChanges) {
+      const confirmReset = confirm('This will discard your unsaved changes. Are you sure?');
+      if (!confirmReset) return;
+    }
+
+    // Reset to original loaded preferences
+    if (this.originalMapPreferences) {
+      Object.keys(this.originalMapPreferences).forEach(region => {
+        const checkbox = document.getElementById(`pref-${region}`);
+        if (checkbox) {
+          checkbox.checked = this.originalMapPreferences[region];
+        }
+      });
+    }
+
+    this.hasUnsavedMapChanges = false;
+    this.updateMapPreferencesStatus();
   }
 
   // Get current map preferences for other modules
