@@ -658,31 +658,33 @@ html, body {
     color: #dc3545 !important;
     border-bottom: 1px solid #dc3545;
     padding-bottom: 10px;
-    margin-bottom: 15px;
-    margin-top: 0;
+    margin: 0 0 20px 0;
 }
 
-/* Nuclear Delete Button */
-.nuclear-delete-btn {
+.danger-zone .profile-field {
+    margin: 0 !important;
+}
+
+.danger-warning {
+    color: #721c24 !important;
+    margin: 0 0 20px 0 !important;
+    font-weight: 500 !important;
+}
+
+/* Profile Delete Button */
+.profile-delete-btn {
     background: #dc3545;
     color: white;
-    border: 2px solid #dc3545;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 6px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
+    border: 1px solid #dc3545;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0;
 }
 
-.nuclear-delete-btn:hover {
+.profile-delete-btn:hover {
     background: #c82333;
     border-color: #bd2130;
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
-}
-
-.nuclear-delete-btn:active {
-    transform: scale(0.98);
 }

@@ -35,13 +35,13 @@ class ProfileManager {
       setTimeout(() => this.setupCloseButton(), 1000);
     }
 
-    // Setup nuclear delete button
-    const nuclearBtn = document.getElementById('nuclear-delete-btn');
-    if (nuclearBtn) {
-      nuclearBtn.addEventListener('click', () => {
-        this.nuclearDelete();
+    // Setup profile delete button
+    const profileDeleteBtn = document.getElementById('profile-delete-btn');
+    if (profileDeleteBtn) {
+      profileDeleteBtn.addEventListener('click', () => {
+        this.deleteProfile();
       });
-      console.log('💣 Nuclear delete button handler attached');
+      console.log('�️ Profile delete button handler attached');
     }
   }
 
@@ -282,8 +282,8 @@ class ProfileManager {
     }
   }
 
-  // Nuclear delete - completely destroy user account and all data
-  async nuclearDelete() {
+    // Complete profile and account deletion
+  async deleteProfile() {
     // Single warning with type confirmation
     const confirmation = prompt('⚠️ WARNING: This will permanently delete your ENTIRE account and ALL data!\n\nThis includes:\n• Your profile\n• All contract history\n• All uploaded files\n• Your user account\n\nThis CANNOT be undone!\n\nType "DELETE" (all caps) to confirm:');
     
@@ -302,10 +302,10 @@ class ProfileManager {
       }
 
       // Show deletion progress
-      const nuclearBtn = document.getElementById('nuclear-delete-btn');
-      if (nuclearBtn) {
-        nuclearBtn.textContent = '💥 DELETING...';
-        nuclearBtn.disabled = true;
+      const deleteBtn = document.getElementById('profile-delete-btn');
+      if (deleteBtn) {
+        deleteBtn.textContent = '�️ DELETING...';
+        deleteBtn.disabled = true;
       }
 
       // Use backend API to completely delete everything including auth account
@@ -328,14 +328,14 @@ class ProfileManager {
       window.location.href = 'index.html';
 
     } catch (error) {
-      console.error('Nuclear delete error:', error);
+      console.error('Profile delete error:', error);
       alert('Error during account deletion: ' + error.message + '\n\nPlease contact support if the problem persists.');
       
       // Re-enable button
-      const nuclearBtn = document.getElementById('nuclear-delete-btn');
-      if (nuclearBtn) {
-        nuclearBtn.textContent = '🗑️ DELETE EVERYTHING';
-        nuclearBtn.disabled = false;
+      const deleteBtn = document.getElementById('profile-delete-btn');
+      if (deleteBtn) {
+        deleteBtn.textContent = '🗑️ DELETE EVERYTHING';
+        deleteBtn.disabled = false;
       }
     }
   }
