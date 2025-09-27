@@ -13,6 +13,16 @@ a, .profile-button, .add-contract-button, .map-pin, .sorting-buttons button {
     cursor: grabbing;
 }
 
+/* Circle blink animation */
+.circle-blink {
+    animation: circle-blink-effect 0.3s ease-in-out 3;
+}
+
+@keyframes circle-blink-effect {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.2; }
+}
+
 /* Reset default margins and padding */
 html, body {
     margin: 0;
