@@ -364,6 +364,11 @@ class ProfileManager {
         profile_complete: profileComplete,
         first_login: false
       };
+
+      // Include current map preferences if available
+      if (this.userProfile.map_preferences) {
+        profileUpdateData.map_preferences = this.userProfile.map_preferences;
+      }
       
       // Try to update profile via API
       const result = await window.apiClient.updateProfile(profileUpdateData);
@@ -604,22 +609,31 @@ class ProfileManager {
     this.setupMapPreferenceHandlers();
   }
 
-  // Setup event handlers for map preference buttons
+  // Setup event handlers for map preference checkboxes
   setupMapPreferenceHandlers() {
     // Avoid duplicate handlers
     if (this.mapHandlersSetup) return;
     this.mapHandlersSetup = true;
 
-    const saveBtn = document.getElementById('save-map-preferences');
-    const resetBtn = document.getElementById('reset-map-preferences');
+    const regions = [
+      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
+      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
+      'caribbean', 'europe', 'asia-pacific', 'other-international'
+    ];
 
-    if (saveBtn) {
-      saveBtn.addEventListener('click', () => this.saveMapPreferences());
-    }
-
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => this.resetMapPreferences());
-    }
+    // Add change event listeners to all checkboxes for auto-save
+    regions.forEach(region => {
+      const checkbox = document.getElementById(`pref-${region}`);
+      if (checkbox) {
+        checkbox.addEventListener('change', () => {
+          // Debounce the save to avoid too many API calls
+          clearTimeout(this.mapPreferenceSaveTimeout);
+          this.mapPreferenceSaveTimeout = setTimeout(() => {
+            this.saveMapPreferences();
+          }, 500); // Save 500ms after last change
+        });
+      }
+    });
   }
 
   // Save map preferences to user profile
@@ -652,7 +666,8 @@ class ProfileManager {
         this.userProfile.map_preferences = preferences;
         
         console.log('✅ Map preferences saved successfully to backend and local cache');
-        this.showProfileSuccess('Map preferences saved successfully!');
+        // Show a subtle success indicator instead of full message for auto-save
+        this.showMapPreferenceSaved();
         
         // Notify map to update its filtering
         if (window.MapController && window.MapController.updateUserPreferences) {
@@ -667,23 +682,28 @@ class ProfileManager {
     }
   }
 
-  // Reset map preferences to default
-  resetMapPreferences() {
-    const defaultRegions = ['conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands'];
-    const allRegions = [
-      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
-      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
-      'caribbean', 'europe', 'asia-pacific', 'other-international'
-    ];
 
-    allRegions.forEach(region => {
-      const checkbox = document.getElementById(`pref-${region}`);
-      if (checkbox) {
-        checkbox.checked = defaultRegions.includes(region);
+
+  // Show subtle success indicator for auto-saved map preferences
+  showMapPreferenceSaved() {
+    // Find the map preferences section and show a temporary checkmark
+    const mapSection = document.querySelector('.profile-section h3').closest('.profile-section');
+    if (mapSection) {
+      let indicator = mapSection.querySelector('.auto-save-indicator');
+      if (!indicator) {
+        indicator = document.createElement('span');
+        indicator.className = 'auto-save-indicator';
+        indicator.style.cssText = 'color: #28a745; font-size: 12px; margin-left: 10px; opacity: 0; transition: opacity 0.3s;';
+        mapSection.querySelector('h3').appendChild(indicator);
       }
-    });
-
-    this.showProfileSuccess('Map preferences reset to default settings');
+      
+      indicator.textContent = '✅ Saved';
+      indicator.style.opacity = '1';
+      
+      setTimeout(() => {
+        indicator.style.opacity = '0';
+      }, 2000);
+    }
   }
 
   // Get current map preferences for other modules
