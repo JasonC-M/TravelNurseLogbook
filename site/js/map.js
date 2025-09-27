@@ -59,6 +59,22 @@ function initializeMapPins() {
 //=============================================================================
 
 /**
+ * Correct longitude for West Pacific locations to display on correct side of map
+ * Converts West Pacific longitudes (140°E to 180°E) to negative values for US-centered view
+ */
+function correctLongitudeForDisplay(lng, logCorrection = false) {
+    // Convert West Pacific longitudes to display on the west side when US-centered
+    if (lng > 140) {
+        const corrected = lng - 360;
+        if (logCorrection) {
+            console.log('🌏 West Pacific longitude correction:', { original: lng, corrected });
+        }
+        return corrected;
+    }
+    return lng;
+}
+
+/**
  * Create custom map icon for contract markers
  */
 function createCustomMapIcon() {
@@ -101,12 +117,15 @@ function addContractToMap(contract) {
     }
 
     const lat = parseFloat(contract.latitude);
-    const lng = parseFloat(contract.longitude);
+    let lng = parseFloat(contract.longitude);
     
     if (isNaN(lat) || isNaN(lng)) {
         console.error('❌ Invalid coordinates for contract:', contract.facility);
         return;
     }
+
+    // Correct West Pacific longitude for proper display
+    lng = correctLongitudeForDisplay(lng, true); // Log corrections during marker creation
 
     // Create marker
     const marker = L.marker([lat, lng], { icon: createCustomMapIcon() })
@@ -197,12 +216,13 @@ function fitMapToAllContracts(contracts, animate = true) {
         return;
     }
     
-    // Get valid coordinates
+    // Get valid coordinates with longitude correction
     const bounds = [];
     contracts.forEach(contract => {
         const lat = parseFloat(contract.latitude);
-        const lng = parseFloat(contract.longitude);
+        let lng = parseFloat(contract.longitude);
         if (!isNaN(lat) && !isNaN(lng)) {
+            lng = correctLongitudeForDisplay(lng);
             bounds.push([lat, lng]);
         }
     });
@@ -237,16 +257,19 @@ function zoomToContractLocation(latitude, longitude) {
     }
     
     const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
+    let lng = parseFloat(longitude);
     
     if (isNaN(lat) || isNaN(lng)) {
         console.error('❌ Invalid coordinates:', { latitude, longitude });
         return;
     }
     
+    // Correct West Pacific longitude for proper zoom location
+    lng = correctLongitudeForDisplay(lng);
+    
     contractMap.setView([lat, lng], 8);
     
-    // Blink the circle after zooming
+    // Blink the circle after zooming (using corrected coordinates)
     setTimeout(() => {
         blinkContractCircle(lat, lng);
     }, 500);
@@ -261,7 +284,10 @@ function zoomToContractLocation(latitude, longitude) {
  */
 function findContractCircle(latitude, longitude) {
     const targetLat = parseFloat(latitude);
-    const targetLng = parseFloat(longitude);
+    let targetLng = parseFloat(longitude);
+    
+    // Apply same longitude correction for matching
+    targetLng = correctLongitudeForDisplay(targetLng);
     
     return contractCircles.find(circle => {
         const circleLatLng = circle.getLatLng();
