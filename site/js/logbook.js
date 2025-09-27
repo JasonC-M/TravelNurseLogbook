@@ -20,14 +20,12 @@ function sortContractsByName() {
     contractsContainer.innerHTML = '';
     contractCards.forEach(card => contractsContainer.appendChild(card));
     
-    // Reinitialize map pins for newly sorted cards
-    if (window.MapController) {
-        window.MapController.initializePins();
-    }
+    // Reinitialize map pins for newly sorted cards (handled automatically by map.js)
     
     // Refresh map view to ensure all contracts are visible
     if (window.logbookApp && window.logbookApp.contracts && window.MapController) {
         setTimeout(() => {
+            console.log('📞 Refreshing map view after name sort');
             window.MapController.fitToContracts(window.logbookApp.contracts, true);
         }, 100);
     }
@@ -48,14 +46,12 @@ function sortContractsByDate() {
     contractsContainer.innerHTML = '';
     contractCards.forEach(card => contractsContainer.appendChild(card));
     
-    // Reinitialize map pins for newly sorted cards
-    if (window.MapController) {
-        window.MapController.initializePins();
-    }
+    // Reinitialize map pins for newly sorted cards (handled automatically by map.js)
     
-    // Refresh map view to ensure all contracts are visible
+    // Refresh map view to ensure all contracts are visible  
     if (window.logbookApp && window.logbookApp.contracts && window.MapController) {
         setTimeout(() => {
+            console.log('📞 Refreshing map view after date sort');
             window.MapController.fitToContracts(window.logbookApp.contracts, true);
         }, 100);
     }
@@ -418,6 +414,26 @@ class LogbookApp {
         await removeAllContracts();
       });
     }
+
+    // Initialize map pin click handlers using event delegation
+    const contractsContainer = document.querySelector('.contract-cell');
+    if (contractsContainer) {
+      contractsContainer.addEventListener('click', (e) => {
+        if (e.target.closest('.map-pin')) {
+          const mapPin = e.target.closest('.map-pin');
+          const lat = parseFloat(mapPin.dataset.lat);
+          const lng = parseFloat(mapPin.dataset.lng);
+          
+          console.log('📍 Map pin clicked:', { lat, lng });
+          
+          if (window.MapController && !isNaN(lat) && !isNaN(lng)) {
+            window.MapController.zoomToLocation(lat, lng);
+          } else {
+            console.error('❌ Invalid coordinates or MapController not available', { lat, lng });
+          }
+        }
+      });
+    }
   }
 
   //===========================================================================
@@ -627,9 +643,7 @@ class LogbookApp {
       });
 
       // Initialize map pin functionality for new cards
-      if (window.MapController) {
-        window.MapController.initializePins();
-      }
+      // Note: Pin functionality now handled automatically by map.js
 
       // Store contracts for future operations
       this.contracts = result.data;
@@ -652,8 +666,11 @@ class LogbookApp {
       }
 
       // Refresh contract markers on map
-      if (window.MapController) {
-        window.MapController.refreshMarkers(result.data);
+      if (window.refreshContractMarkers) {
+        console.log('📞 Calling refreshContractMarkers with', result.data.length, 'contracts');
+        window.refreshContractMarkers(result.data);
+      } else {
+        console.log('❌ window.refreshContractMarkers not available');
       }
 
 
