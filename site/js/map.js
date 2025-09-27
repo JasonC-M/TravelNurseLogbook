@@ -208,6 +208,77 @@ function createCustomMapIcon() {
     return customMapIcon;
 }
 
+// Visual indicator for debugging smart bounds
+let smartBoundsOutline = null;
+
+// Add visual outline to show smart bounds area (orange box)
+function drawSmartBoundsOutline(boundsData) {
+    // Remove existing outline
+    if (smartBoundsOutline && contractMap) {
+        contractMap.removeLayer(smartBoundsOutline);
+        smartBoundsOutline = null;
+    }
+    
+    if (!boundsData || !boundsData.rawBounds || !contractMap) {
+        return;
+    }
+    
+    const { minLat, maxLat, minLng, maxLng } = boundsData.rawBounds;
+    
+    // Create a rectangle to show the smart bounds
+    smartBoundsOutline = L.rectangle(
+        [[minLat, minLng], [maxLat, maxLng]], 
+        {
+            color: '#FF6B35',
+            weight: 3,
+            opacity: 0.8,
+            fillOpacity: 0.1,
+            dashArray: '10, 5'
+        }
+    ).addTo(contractMap);
+    
+    console.log('🔲 Smart bounds outline drawn');
+}
+
+// Smart zoom with dynamic panel padding calculation
+function calculateSmartZoomToFill(boundsData) {
+    if (!contractMap || !boundsData.tightBounds) {
+        return null;
+    }
+    
+    const bounds = boundsData.tightBounds;
+    const mapSize = contractMap.getSize(); // Get panel dimensions
+    
+    // Get the exact center of the smart rectangle
+    const center = bounds.getCenter();
+    
+    console.log(`📍 Smart rectangle center: ${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`);
+    console.log(`📐 Smart rectangle bounds: N=${bounds.getNorth().toFixed(2)}, S=${bounds.getSouth().toFixed(2)}, E=${bounds.getEast().toFixed(2)}, W=${bounds.getWest().toFixed(2)}`);
+    console.log(`📐 Panel size: ${mapSize.x}×${mapSize.y}px`);
+    
+    // Calculate the bounds dimensions in degrees
+    const boundsWidth = bounds.getEast() - bounds.getWest();
+    const boundsHeight = bounds.getNorth() - bounds.getSouth();
+    
+    // Calculate what zoom level would be needed for each dimension
+    const aspectRatio = mapSize.x / mapSize.y;
+    const boundsAspectRatio = boundsWidth / boundsHeight;
+    
+    console.log(`📏 Panel aspect ratio: ${aspectRatio.toFixed(3)}, Bounds aspect ratio: ${boundsAspectRatio.toFixed(3)}`);
+    
+    // Add reasonable buffer so contract circles don't touch panel edges
+    const paddingX = Math.max(Math.round(mapSize.x * 0.08), 30); // 8% or min 30px buffer
+    const paddingY = Math.max(Math.round(mapSize.y * 0.08), 30); // 8% or min 30px buffer
+    
+    console.log(`📏 Calculated padding with buffer for circles: ${paddingX}px horizontal, ${paddingY}px vertical`);
+    
+    return {
+        bounds: bounds,
+        center: center,
+        padding: [paddingY, paddingX] // [vertical, horizontal]
+    };
+}
+
 // Calculate smart map bounds for all contract locations
 function calculateSmartMapBounds(contracts) {
     if (!contracts || contracts.length === 0) {
@@ -293,12 +364,35 @@ function calculateSmartMapBounds(contracts) {
         [maxLat, maxLng]
     ]);
 
+    // Store the raw bounds with some padding for the orange box visualization
+    const rawMinLat = Math.min(...validCoords.map(coord => coord[0]));
+    const rawMaxLat = Math.max(...validCoords.map(coord => coord[0]));
+    const rawMinLng = Math.min(...validCoords.map(coord => coord[1]));
+    const rawMaxLng = Math.max(...validCoords.map(coord => coord[1]));
+    
+    // Add small padding to raw bounds so contracts don't touch orange box edges
+    const rawLatSpan = rawMaxLat - rawMinLat;
+    const rawLngSpan = rawMaxLng - rawMinLng;
+    const rawLatPadding = Math.max(rawLatSpan * 0.03, 0.15); // 3% padding or 0.15 degree minimum
+    const rawLngPadding = Math.max(rawLngSpan * 0.03, 0.2);  // 3% padding or 0.2 degree minimum
+    
+    const rawBounds = {
+        minLat: rawMinLat - rawLatPadding,
+        maxLat: rawMaxLat + rawLatPadding,
+        minLng: rawMinLng - rawLngPadding,
+        maxLng: rawMaxLng + rawLngPadding
+    };
+
     console.log(`🗺️ Smart bounds calculated to fit ${filteredContracts.length} contract circles:`, {
         minLat, maxLat, minLng, maxLng
     });
     console.log('📍 Contract locations included in bounds:', filteredContracts.map(c => `${c.hospital_name} (${c.latitude}, ${c.longitude})`));
 
-    return { bounds }
+    return { 
+        bounds, // Padded bounds for zooming
+        rawBounds, // Raw bounds for orange box
+        tightBounds: bounds // Same as bounds, used by calculateSmartZoomToFill
+    }
 }
 
 // Detect and filter extreme geographic outliers to prevent world-spanning zooms
@@ -367,21 +461,37 @@ function fitMapToAllContracts(contracts, animate = true) {
         return;
     }
 
-    const viewSettings = calculateSmartMapBounds(contracts);
+    const boundsData = calculateSmartMapBounds(contracts);
+    
+    // Draw the orange box to visualize the smart bounds
+    drawSmartBoundsOutline(boundsData);
 
-    if (viewSettings.bounds) {
-        // Use fitBounds for multiple contracts with dynamic zoom
-        const options = {
-            animate: animate,
-            padding: [20, 20] // Smaller padding to bring contracts closer to panel edges
-            // No maxZoom - let Leaflet calculate the optimal zoom dynamically
-        };
-        console.log('🗺️ Fitting bounds with padding for filtered contracts');
-        contractMap.fitBounds(viewSettings.bounds, options);
+    if (boundsData.bounds) {
+        // Calculate optimal zoom settings with minimal padding
+        const zoomSettings = calculateSmartZoomToFill(boundsData);
+        
+        if (zoomSettings) {
+            const options = {
+                animate: animate,
+                padding: zoomSettings.padding // Minimal padding for maximum zoom
+                // No maxZoom - let Leaflet calculate fractional zoom dynamically
+            };
+            console.log('🗺️ Using smart zoom to fill panel with minimal padding');
+            console.log('🔍 Zoom padding:', zoomSettings.padding);
+            contractMap.fitBounds(zoomSettings.bounds, options);
+        } else {
+            // Fallback to basic fitBounds
+            const options = {
+                animate: animate,
+                padding: [0, 0]
+            };
+            console.log('🗺️ Using fallback fitBounds with zero padding');
+            contractMap.fitBounds(boundsData.bounds, options);
+        }
     } else {
         // Use setView for single contract or default view
         const options = animate ? { animate: true } : {};
-        contractMap.setView(viewSettings.center, viewSettings.zoom, options);
+        contractMap.setView(boundsData.center, boundsData.zoom, options);
     }
 
     console.log(`🗺️ Map fitted to show ${contracts.length} contracts`);
