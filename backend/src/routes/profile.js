@@ -51,7 +51,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
 // Update user profile
 router.put('/', validateProfile, asyncHandler(async (req, res) => {
-  const { first_name, last_name, phone, specialization, license_number } = req.body
+  const { first_name, last_name, phone, specialization, license_number, map_preferences } = req.body
 
   const userClient = createUserClient(req.token)
 
@@ -62,6 +62,11 @@ router.put('/', validateProfile, asyncHandler(async (req, res) => {
     specialization: specialization || null,
     license_number: license_number || null,
     updated_at: new Date().toISOString()
+  }
+
+  // Add map_preferences if provided
+  if (map_preferences !== undefined) {
+    updateData.map_preferences = map_preferences
   }
 
   // First check if profile exists

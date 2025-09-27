@@ -98,6 +98,22 @@ export const validateProfile = [
     .trim()
     .isLength({ max: 50 })
     .withMessage('License number must not exceed 50 characters'),
+
+  body('map_preferences')
+    .optional()
+    .isObject()
+    .withMessage('Map preferences must be a valid object')
+    .custom((value) => {
+      if (value && typeof value === 'object') {
+        // Validate that all values are booleans
+        for (const key in value) {
+          if (typeof value[key] !== 'boolean') {
+            throw new Error(`Map preference '${key}' must be a boolean value`);
+          }
+        }
+      }
+      return true;
+    }),
   
   handleValidationErrors
 ]

@@ -62,6 +62,96 @@
         </div>
       </div>
 
+      <!-- Default Map Smart View -->
+      <div class="profile-section">
+        <h3>Default Map Smart View</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+          Select which regions to include when the map automatically fits to show all your contracts.
+          Unchecked regions will still appear on the map but won't affect the automatic zoom level.
+        </p>
+        
+        <div class="map-preferences-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+          <!-- US Mainland -->
+          <div class="preference-group">
+            <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">🇺🇸 United States</h4>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-conus" checked>
+              <label for="pref-conus">Continental US (CONUS)</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-alaska" checked>
+              <label for="pref-alaska">Alaska</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-hawaii" checked>
+              <label for="pref-hawaii">Hawaii</label>
+            </div>
+          </div>
+
+          <!-- US Territories -->
+          <div class="preference-group">
+            <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">🏝️ US Territories</h4>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-puerto-rico" checked>
+              <label for="pref-puerto-rico">Puerto Rico</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-us-virgin-islands" checked>
+              <label for="pref-us-virgin-islands">US Virgin Islands</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-guam">
+              <label for="pref-guam">Guam</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-american-samoa">
+              <label for="pref-american-samoa">American Samoa</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="pref-northern-mariana">
+              <label for="pref-northern-mariana">Northern Mariana Islands</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="preference-group" style="margin-top: 15px;">
+          <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">🌍 International</h4>
+          <div class="checkbox-field">
+            <input type="checkbox" id="pref-canada">
+            <label for="pref-canada">Canada</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="pref-mexico">
+            <label for="pref-mexico">Mexico & Central America</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="pref-caribbean">
+            <label for="pref-caribbean">Caribbean (non-US)</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="pref-europe">
+            <label for="pref-europe">Europe</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="pref-asia-pacific">
+            <label for="pref-asia-pacific">Asia & Pacific</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="pref-other-international">
+            <label for="pref-other-international">Other International</label>
+          </div>
+        </div>
+
+        <div style="margin-top: 15px;">
+          <button id="save-map-preferences" class="edit-btn" style="background: #007bff;">
+            Save Map Preferences
+          </button>
+          <button id="reset-map-preferences" class="edit-btn" style="background: #6c757d; margin-left: 10px;">
+            Reset to Default
+          </button>
+        </div>
+      </div>
+
       <!-- Manual Profile Completion -->
       <div class="profile-section">
         <h3>Profile Status</h3>

@@ -195,6 +195,9 @@ class ProfileManager {
       if (fullNameEl) fullNameEl.value = this.userProfile.full_name || '';
     }
 
+    // Map preferences
+    this.loadMapPreferences();
+
     // Statistics
     if (this.userContracts) {
       const activeContracts = this.userContracts.filter(c => c.status === 'active').length;
@@ -545,6 +548,150 @@ class ProfileManager {
         this.updateProfileUI(user);
       }
     }
+  }
+
+  //==========================================================================
+  // MAP PREFERENCES MANAGEMENT
+  //==========================================================================
+
+  // Load map preferences and set checkboxes
+  loadMapPreferences() {
+    // Default preferences (CONUS, AK, HI, PR, VI enabled by default)
+    const defaultPrefs = {
+      conus: true,
+      alaska: true,
+      hawaii: true,
+      'puerto-rico': true,
+      'us-virgin-islands': true,
+      guam: false,
+      'american-samoa': false,
+      'northern-mariana': false,
+      canada: false,
+      mexico: false,
+      caribbean: false,
+      europe: false,
+      'asia-pacific': false,
+      'other-international': false
+    };
+
+    // Get preferences from user profile or use defaults
+    const mapPrefs = (this.userProfile && this.userProfile.map_preferences) 
+      ? this.userProfile.map_preferences 
+      : defaultPrefs;
+
+    // Set checkbox states
+    Object.keys(mapPrefs).forEach(region => {
+      const checkbox = document.getElementById(`pref-${region}`);
+      if (checkbox) {
+        checkbox.checked = mapPrefs[region] || false;
+      }
+    });
+
+    // Setup event handlers for the buttons (one-time setup)
+    this.setupMapPreferenceHandlers();
+  }
+
+  // Setup event handlers for map preference buttons
+  setupMapPreferenceHandlers() {
+    // Avoid duplicate handlers
+    if (this.mapHandlersSetup) return;
+    this.mapHandlersSetup = true;
+
+    const saveBtn = document.getElementById('save-map-preferences');
+    const resetBtn = document.getElementById('reset-map-preferences');
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => this.saveMapPreferences());
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => this.resetMapPreferences());
+    }
+  }
+
+  // Save map preferences to user profile
+  async saveMapPreferences() {
+    const regions = [
+      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
+      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
+      'caribbean', 'europe', 'asia-pacific', 'other-international'
+    ];
+
+    const preferences = {};
+    regions.forEach(region => {
+      const checkbox = document.getElementById(`pref-${region}`);
+      if (checkbox) {
+        preferences[region] = checkbox.checked;
+      }
+    });
+
+    try {
+      // Update local profile data
+      if (!this.userProfile) this.userProfile = {};
+      this.userProfile.map_preferences = preferences;
+
+      // Save to backend
+      const result = await window.apiClient.updateProfile({
+        map_preferences: preferences
+      });
+
+      if (result.success) {
+        this.showProfileSuccess('Map preferences saved successfully!');
+        
+        // Notify map to update its filtering
+        if (window.MapController && window.MapController.updateUserPreferences) {
+          window.MapController.updateUserPreferences(preferences);
+        }
+      } else {
+        throw new Error(result.error || 'Failed to save preferences');
+      }
+    } catch (error) {
+      console.error('Error saving map preferences:', error);
+      this.showProfileError('Failed to save map preferences: ' + error.message);
+    }
+  }
+
+  // Reset map preferences to default
+  resetMapPreferences() {
+    const defaultRegions = ['conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands'];
+    const allRegions = [
+      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
+      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
+      'caribbean', 'europe', 'asia-pacific', 'other-international'
+    ];
+
+    allRegions.forEach(region => {
+      const checkbox = document.getElementById(`pref-${region}`);
+      if (checkbox) {
+        checkbox.checked = defaultRegions.includes(region);
+      }
+    });
+
+    this.showProfileSuccess('Map preferences reset to default settings');
+  }
+
+  // Get current map preferences for other modules
+  getMapPreferences() {
+    if (!this.userProfile || !this.userProfile.map_preferences) {
+      // Return default preferences
+      return {
+        conus: true,
+        alaska: true,
+        hawaii: true,
+        'puerto-rico': true,
+        'us-virgin-islands': true,
+        guam: false,
+        'american-samoa': false,
+        'northern-mariana': false,
+        canada: false,
+        mexico: false,
+        caribbean: false,
+        europe: false,
+        'asia-pacific': false,
+        'other-international': false
+      };
+    }
+    return this.userProfile.map_preferences;
   }
 }
 

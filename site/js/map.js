@@ -5,6 +5,32 @@
 
 let contractMap;
 
+// Get user map preferences for smart zoom filtering
+function getUserMapPreferences() {
+    // Try to get preferences from profile manager
+    if (window.profileManager && window.profileManager.getMapPreferences) {
+        return window.profileManager.getMapPreferences();
+    }
+    
+    // Default preferences if profile manager not available
+    return {
+        conus: true,
+        alaska: true,
+        hawaii: true,
+        'puerto-rico': true,
+        'us-virgin-islands': true,
+        guam: false,
+        'american-samoa': false,
+        'northern-mariana': false,
+        canada: false,
+        mexico: false,
+        caribbean: false,
+        europe: false,
+        'asia-pacific': false,
+        'other-international': false
+    };
+}
+
 // Initialize map with layer control
 function initializeMap() {
     contractMap = L.map('map').setView([39.8283, -98.5795], 5); // Centered on US
@@ -119,26 +145,84 @@ function calculateSmartMapBounds(contracts) {
         };
     }
 
-    // Filter to include US territories: CONUS, Alaska, Hawaii, Puerto Rico, Virgin Islands
-    // Exclude distant Pacific territories like Guam that create world-spanning views
-    const usCoords = validCoords.filter(coord => {
+    // Get user preferences for which regions to include in smart zoom
+    const userPrefs = getUserMapPreferences();
+    
+    // Filter coordinates based on user preferences
+    const filteredCoords = validCoords.filter(coord => {
         const lat = coord[0];
         const lng = coord[1];
         
-        // Include CONUS (Continental US): roughly 25-49°N, -125 to -66°W
-        if (lat >= 25 && lat <= 49 && lng >= -125 && lng <= -66) return true;
+        // CONUS (Continental US): roughly 25-49°N, -125 to -66°W
+        if (lat >= 25 && lat <= 49 && lng >= -125 && lng <= -66) {
+            return userPrefs.conus;
+        }
         
-        // Include Alaska: roughly 55-72°N, -180 to -140°W
-        if (lat >= 55 && lat <= 72 && lng >= -180 && lng <= -140) return true;
+        // Alaska: roughly 55-72°N, -180 to -140°W
+        if (lat >= 55 && lat <= 72 && lng >= -180 && lng <= -140) {
+            return userPrefs.alaska;
+        }
         
-        // Include Hawaii: roughly 18-23°N, -162 to -154°W
-        if (lat >= 18 && lat <= 23 && lng >= -162 && lng <= -154) return true;
+        // Hawaii: roughly 18-23°N, -162 to -154°W
+        if (lat >= 18 && lat <= 23 && lng >= -162 && lng <= -154) {
+            return userPrefs.hawaii;
+        }
         
-        // Include Puerto Rico and US Virgin Islands (Caribbean): roughly 17-19°N, -68 to -64°W
-        if (lat >= 17 && lat <= 19 && lng >= -68 && lng <= -64) return true;
+        // Puerto Rico: roughly 17.8-18.6°N, -67.3 to -65.2°W
+        if (lat >= 17.8 && lat <= 18.6 && lng >= -67.3 && lng <= -65.2) {
+            return userPrefs['puerto-rico'];
+        }
         
-        // Exclude everything else (Guam, other Pacific territories)
-        return false;
+        // US Virgin Islands: roughly 17.6-18.4°N, -65.1 to -64.5°W
+        if (lat >= 17.6 && lat <= 18.4 && lng >= -65.1 && lng <= -64.5) {
+            return userPrefs['us-virgin-islands'];
+        }
+        
+        // Guam: roughly 13.2-13.7°N, 144.6-145.0°E (normalized to negative)
+        if (lat >= 13.2 && lat <= 13.7 && lng >= -215.4 && lng <= -215.0) {
+            return userPrefs.guam;
+        }
+        
+        // American Samoa: roughly 14.1-14.4°S, -171.1 to -169.4°W
+        if (lat >= -14.4 && lat <= -14.1 && lng >= -171.1 && lng <= -169.4) {
+            return userPrefs['american-samoa'];
+        }
+        
+        // Northern Mariana Islands: roughly 14.1-20.6°N, 144.9-146.1°E (normalized)
+        if (lat >= 14.1 && lat <= 20.6 && lng >= -215.1 && lng <= -213.9) {
+            return userPrefs['northern-mariana'];
+        }
+        
+        // Canada: roughly 41.7-83.1°N, -141.0 to -52.6°W
+        if (lat >= 41.7 && lat <= 83.1 && lng >= -141.0 && lng <= -52.6) {
+            return userPrefs.canada;
+        }
+        
+        // Mexico & Central America: roughly 14.5-32.7°N, -118.4 to -86.7°W
+        if (lat >= 14.5 && lat <= 32.7 && lng >= -118.4 && lng <= -86.7) {
+            return userPrefs.mexico;
+        }
+        
+        // Caribbean (non-US): roughly 10.0-27.0°N, -85.0 to -59.0°W (excluding US territories)
+        if (lat >= 10.0 && lat <= 27.0 && lng >= -85.0 && lng <= -59.0) {
+            // Exclude areas already covered by US territories
+            if ((lat >= 17.6 && lat <= 18.6 && lng >= -67.3 && lng <= -64.5)) return false; // US territories
+            return userPrefs.caribbean;
+        }
+        
+        // Europe: roughly 35.0-71.0°N, -25.0 to 45.0°E
+        if (lat >= 35.0 && lat <= 71.0 && lng >= -25.0 && lng <= 45.0) {
+            return userPrefs.europe;
+        }
+        
+        // Asia & Pacific: roughly -50.0-80.0°N, 60.0-180.0°E (normalized to negative for Pacific)
+        if ((lat >= -50.0 && lat <= 80.0 && lng >= 60.0 && lng <= 180.0) ||
+            (lat >= -50.0 && lat <= 80.0 && lng >= -180.0 && lng <= -120.0)) {
+            return userPrefs['asia-pacific'];
+        }
+        
+        // Other International (catch-all for anywhere else)
+        return userPrefs['other-international'];
     });
 
     console.log(`�🇸 Using ${usCoords.length} US territory contracts out of ${validCoords.length} total for map centering`);

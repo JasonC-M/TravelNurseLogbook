@@ -385,6 +385,33 @@ html, body {
     font-size: 14px;
 }
 
+/* Checkbox fields for map preferences */
+.checkbox-field {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.checkbox-field input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+    transform: scale(1.1);
+}
+
+.checkbox-field label {
+    margin: 0;
+    font-weight: normal;
+    cursor: pointer;
+    flex: 1;
+}
+
+.preference-group {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
 .edit-btn {
     background: #007bff;
     color: white;
