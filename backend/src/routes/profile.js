@@ -27,6 +27,22 @@ router.get('/', asyncHandler(async (req, res) => {
         email: req.user.email,
         first_name: req.user.user_metadata?.first_name || null,
         last_name: req.user.user_metadata?.last_name || null,
+        map_preferences: {
+          "conus": true,
+          "alaska": true,
+          "hawaii": true,
+          "puerto-rico": true,
+          "us-virgin-islands": true,
+          "guam": false,
+          "american-samoa": false,
+          "northern-mariana": false,
+          "canada": false,
+          "mexico": false,
+          "caribbean": false,
+          "europe": false,
+          "asia-pacific": false,
+          "other-international": false
+        },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
