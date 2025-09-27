@@ -225,10 +225,10 @@ function calculateSmartMapBounds(contracts) {
         return userPrefs['other-international'];
     });
 
-    console.log(`�🇸 Using ${usCoords.length} US territory contracts out of ${validCoords.length} total for map centering`);
+    console.log(`�🇸 Using ${filteredCoords.length} US territory contracts out of ${validCoords.length} total for map centering`);
 
     // If no US territory contracts, fall back to all contracts
-    const coordsToUse = usCoords.length > 0 ? usCoords : validCoords;
+    const coordsToUse = filteredCoords.length > 0 ? filteredCoords : validCoords;
 
     // Determine geographic extent based on CONUS contracts only
     let minLat = Math.min(...coordsToUse.map(coord => coord[0]));
