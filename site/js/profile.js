@@ -6,6 +6,7 @@ class ProfileManager {
     this.userProfile = null;
     this.userContracts = [];
     this.isProfileOpen = false;
+    this.mapPreferencesLoaded = false;
     this.initializeEventHandlers();
   }
 
@@ -195,8 +196,11 @@ class ProfileManager {
       if (fullNameEl) fullNameEl.value = this.userProfile.full_name || '';
     }
 
-    // Map preferences
-    this.loadMapPreferences();
+    // Map preferences (only load if not already loaded)
+    if (!this.mapPreferencesLoaded) {
+      this.loadMapPreferences();
+      this.mapPreferencesLoaded = true;
+    }
 
     // Statistics
     if (this.userContracts) {
@@ -556,6 +560,8 @@ class ProfileManager {
 
   // Load map preferences and set checkboxes
   loadMapPreferences() {
+    console.log('🗺️ Loading map preferences...', this.userProfile?.map_preferences);
+    
     // Default preferences (CONUS, AK, HI, PR, VI enabled by default)
     const defaultPrefs = {
       conus: true,
@@ -575,15 +581,22 @@ class ProfileManager {
     };
 
     // Get preferences from user profile or use defaults
-    const mapPrefs = (this.userProfile && this.userProfile.map_preferences) 
-      ? this.userProfile.map_preferences 
-      : defaultPrefs;
+    let mapPrefs;
+    if (this.userProfile && this.userProfile.map_preferences && typeof this.userProfile.map_preferences === 'object') {
+      mapPrefs = this.userProfile.map_preferences;
+      console.log('✅ Using saved preferences:', mapPrefs);
+    } else {
+      mapPrefs = defaultPrefs;
+      console.log('⚠️ Using default preferences (no saved prefs found)');
+    }
 
     // Set checkbox states
-    Object.keys(mapPrefs).forEach(region => {
+    Object.keys(defaultPrefs).forEach(region => {
       const checkbox = document.getElementById(`pref-${region}`);
       if (checkbox) {
-        checkbox.checked = mapPrefs[region] || false;
+        // Use saved preference if available, otherwise use default
+        checkbox.checked = mapPrefs.hasOwnProperty(region) ? mapPrefs[region] : defaultPrefs[region];
+        console.log(`🔘 ${region}: ${checkbox.checked}`);
       }
     });
 
@@ -626,16 +639,19 @@ class ProfileManager {
     });
 
     try {
-      // Update local profile data
-      if (!this.userProfile) this.userProfile = {};
-      this.userProfile.map_preferences = preferences;
+      console.log('💾 Saving map preferences:', preferences);
 
-      // Save to backend
+      // Save to backend first
       const result = await window.apiClient.updateProfile({
         map_preferences: preferences
       });
 
       if (result.success) {
+        // Update local profile data only after successful backend save
+        if (!this.userProfile) this.userProfile = {};
+        this.userProfile.map_preferences = preferences;
+        
+        console.log('✅ Map preferences saved successfully to backend and local cache');
         this.showProfileSuccess('Map preferences saved successfully!');
         
         // Notify map to update its filtering
@@ -646,7 +662,7 @@ class ProfileManager {
         throw new Error(result.error || 'Failed to save preferences');
       }
     } catch (error) {
-      console.error('Error saving map preferences:', error);
+      console.error('❌ Error saving map preferences:', error);
       this.showProfileError('Failed to save map preferences: ' + error.message);
     }
   }
