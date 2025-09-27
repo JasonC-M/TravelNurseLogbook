@@ -624,14 +624,27 @@ class ProfileManager {
     this.originalMapPreferences = { ...mapPrefs };
     
     // Set checkbox states
+    const enabledRegions = [];
+    const disabledRegions = [];
+    
     Object.keys(defaultPrefs).forEach(region => {
       const checkbox = document.getElementById(`pref-${region}`);
       if (checkbox) {
         // Use saved preference if available, otherwise use default
         checkbox.checked = mapPrefs.hasOwnProperty(region) ? mapPrefs[region] : defaultPrefs[region];
-        console.log(`profile.js - 🔘 ${region}: ${checkbox.checked}`);
+        if (checkbox.checked) {
+          enabledRegions.push(region);
+        } else {
+          disabledRegions.push(region);
+        }
       }
     });
+    
+    // Consolidated logging
+    console.log(`profile.js - 🔘 Map regions enabled: [${enabledRegions.join(', ')}]`);
+    if (disabledRegions.length > 0) {
+      console.log(`profile.js - 🔘 Map regions disabled: [${disabledRegions.join(', ')}]`);
+    }
 
     // Reset unsaved changes flag
     this.hasUnsavedMapChanges = false;

@@ -132,48 +132,76 @@ function setupMapResizeHandling() {
         return;
     }
 
-    // ResizeObserver for container size changes (when contracts load in left panel)
+    // ResizeObserver for container size changes (when contracts load in left panel) - OPTIMIZED
     if (window.ResizeObserver) {
+        let resizeTimeout = null;
+        let lastSize = { width: 0, height: 0 };
+        
         const resizeObserver = new ResizeObserver(entries => {
-            console.log('map.js - 📐 Map container size changed - invalidating map size');
-            if (contractMap) {
-                // Small delay to ensure DOM has settled
-                setTimeout(() => {
+            if (resizeTimeout) {
+                clearTimeout(resizeTimeout);
+            }
+            
+            const entry = entries[0];
+            const newSize = {
+                width: entry.contentRect.width,
+                height: entry.contentRect.height
+            };
+            
+            // Only trigger if size actually changed significantly (more than 10px)
+            const sizeChanged = Math.abs(newSize.width - lastSize.width) > 10 || 
+                               Math.abs(newSize.height - lastSize.height) > 10;
+            
+            if (sizeChanged && contractMap) {
+                resizeTimeout = setTimeout(() => {
+                    console.log(`map.js - 📐 Map container resized (${newSize.width}x${newSize.height}) - invalidating map size`);
                     contractMap.invalidateSize();
-                }, 100);
+                    lastSize = newSize;
+                }, 200); // Debounced resize handling
             }
         });
         
         resizeObserver.observe(mapContainer);
-        console.log('map.js - ✅ ResizeObserver attached to map container');
+        console.log('map.js - ✅ Optimized ResizeObserver attached to map container');
     }
 
-    // MutationObserver for when left panel content changes (contracts loading)
+    // MutationObserver for when left panel content changes (contracts loading) - OPTIMIZED
     if (window.MutationObserver) {
+        let mutationTimeout = null;
+        let mutationCount = 0;
+        
         const mutationObserver = new MutationObserver(mutations => {
-            const hasContentChanges = mutations.some(mutation => 
-                mutation.type === 'childList' || 
-                (mutation.type === 'attributes' && mutation.attributeName === 'style')
+            // Debounce multiple rapid mutations during page load
+            if (mutationTimeout) {
+                clearTimeout(mutationTimeout);
+            }
+            
+            mutationCount++;
+            
+            const hasSignificantChanges = mutations.some(mutation => 
+                mutation.type === 'childList' && mutation.addedNodes.length > 0
             );
             
-            if (hasContentChanges && contractMap) {
-                console.log('map.js - 📐 Page content changed - invalidating map size');
-                setTimeout(() => {
+            if (hasSignificantChanges && contractMap) {
+                mutationTimeout = setTimeout(() => {
+                    console.log(`map.js - 📐 Page content changed (#${mutationCount}) - invalidating map size`);
                     contractMap.invalidateSize();
-                }, 150);
+                    mutationCount = 0; // Reset counter after handling
+                }, 300); // Longer delay to batch changes
             }
         });
 
-        // Watch the main content area for changes
-        const mainContent = document.querySelector('.main-content') || document.body;
-        mutationObserver.observe(mainContent, {
+        // Watch only the contract list container, not entire page
+        const contractList = document.querySelector('.contracts-container') || 
+                           document.querySelector('.main-content') || 
+                           document.body;
+        mutationObserver.observe(contractList, {
             childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['style', 'class']
+            subtree: false, // Don't watch deep changes
+            attributes: false // Don't watch attribute changes
         });
         
-        console.log('map.js - ✅ MutationObserver attached to main content');
+        console.log('map.js - ✅ Optimized MutationObserver attached to contract container');
     }
 }
 
@@ -192,6 +220,11 @@ window.MapController = {
     fitToContracts: () => console.log('map.js - 🎯 fitToContracts - not implemented yet (Step 6)'),
     zoomToLocation: () => console.log('map.js - 🔍 zoomToLocation - not implemented yet (Step 9)'),
     getMap: () => contractMap
+};
+
+// Temporary global function for backward compatibility
+window.refreshContractMarkers = () => {
+    console.log('map.js - 🔄 refreshContractMarkers called - will be implemented in Step 4');
 };
 
 // Map will be initialized by logbook.js calling MapController.initialize()
