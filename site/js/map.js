@@ -11,6 +11,11 @@ let contractMarkers = [];
 let contractCircles = [];
 let customMapIcon = null;
 let smartBoxOverlay = null;
+let debugZoomLabel = null;
+let debugCenterMarker = null;
+let debugMapPanelCenter = null;
+let currentSmartBoxCenter = null;
+let contractsLoaded = false;
 
 //=============================================================================
 // MAP INITIALIZATION
@@ -22,8 +27,11 @@ let smartBoxOverlay = null;
 function initializeMap() {
     console.log('🗺️ [STEP 1] Initializing blank map...');
     
-    // Create map centered on CONUS as initial state
-    contractMap = L.map('map').setView([39.8283, -98.5795], 4);
+    // Create map with fractional zoom enabled for precise smart box control
+    contractMap = L.map('map', {
+        zoomSnap: 0.1,    // Allow zoom in 0.1 increments (much more precise)
+        zoomDelta: 0.25   // Zoom buttons/keyboard increment by 0.25
+    }).setView([39.8283, -98.5795], 4);
 
     // Define map layers
     const defaultLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -206,8 +214,25 @@ function refreshContractMarkers(contracts) {
 function executeMapUpdateSequence(contracts, trigger) {
     console.log(`🎯 [SEQUENCE] Starting map update sequence for: ${trigger}`, {
         contractCount: contracts?.length || 0,
-        mapReady: !!contractMap
+        mapReady: !!contractMap,
+        contractsLoadedPreviously: contractsLoaded
     });
+    
+    // Set flag that contracts have been loaded  
+    if (contracts && contracts.length > 0) {
+        contractsLoaded = true;
+        console.log('✅ [TIMING] Contracts loaded, enabling proper map centering');
+        
+        // Force map size recalculation after contract loading (left panel size may have changed)
+        if (contractMap) {
+            console.log('🔄 [SIZE] Invalidating map size after contract load to handle container changes');
+            // Small delay to ensure DOM layout has settled
+            setTimeout(() => {
+                contractMap.invalidateSize();
+                console.log('✅ [SIZE] Map size invalidated after layout settlement');
+            }, 100);
+        }
+    }
     
     if (!contractMap) {
         console.error('❌ Map not ready for sequence');
@@ -241,18 +266,33 @@ function executeMapUpdateSequence(contracts, trigger) {
             setTimeout(() => {
                 console.log('🎯 [STEP 6] Centering and zooming to smart box...');
                 fitMapToSmartBox(smartBox, trigger !== 'resize');
+                // Show debug displays after map settles
+                setTimeout(() => {
+                    updateDebugCenterMarker();
+                    updateDebugMapPanelCenter();
+                }, 200);
             }, 100);
         } else {
             // No filtered contracts - fall back to CONUS
             console.log('🏠 [FALLBACK] No filtered contracts - centering on CONUS');
             setTimeout(() => {
                 contractMap.setView([39.8283, -98.5795], 4, { animate: trigger !== 'resize' });
+                // Show debug displays after map settles
+                setTimeout(() => {
+                    updateDebugCenterMarker();
+                    updateDebugMapPanelCenter();
+                }, 200);
             }, 100);
         }
     } else {
         // No contracts at all - fall back to CONUS
         console.log('🏠 [FALLBACK] No contracts loaded - centering on CONUS');
         contractMap.setView([39.8283, -98.5795], 4, { animate: trigger !== 'resize' });
+        // Show debug displays after map settles
+        setTimeout(() => {
+            updateDebugCenterMarker();
+            updateDebugMapPanelCenter();
+        }, 200);
     }
 }
 
@@ -291,6 +331,9 @@ function fitMapToSmartBox(smartBox, animate = true) {
     const centerLat = visualCenter.lat;
     const centerLng = visualCenter.lng;
     
+    // Store the calculated smart box center for debugging
+    const calculatedSmartBoxCenter = { lat: centerLat, lng: centerLng };
+    
     console.log('🎯 [CENTER] Geographic vs Visual center comparison:', {
         mapSize: { width: mapWidthPx, height: mapHeightPx },
         gpsSpan: { lat: latSpan.toFixed(4), lng: lngSpan.toFixed(4) },
@@ -314,39 +357,52 @@ function fitMapToSmartBox(smartBox, animate = true) {
         })
     }).addTo(contractMap);
     
-    // Calculate zoom level to fit the box with proper padding for contracts
-    // The smart box includes a buffer, so we need to zoom out slightly to ensure
-    // the actual contracts (which are inside the buffer) are fully visible
+    // Use Leaflet's precise getBoundsZoom() method for accurate zoom calculation
+    // This actually measures what zoom level will make the bounds fit the viewport
+    const finalZoom = calculatePreciseZoomForSmartBox(smartBox);
     
-    const degreesPerPixelLat = latSpan / mapHeightPx;
-    const degreesPerPixelLng = lngSpan / mapWidthPx;
-    
-    // Use the larger degrees-per-pixel value (more restrictive) to ensure both dimensions fit
-    const requiredDegreesPerPixel = Math.max(degreesPerPixelLat, degreesPerPixelLng);
-    
-    // Calculate zoom: At zoom 0, whole world (360°) = 256px
-    // At zoom z: degrees per pixel = 360 / (256 * 2^z)
-    const calculatedZoom = Math.log2(360 / (256 * requiredDegreesPerPixel));
-    
-    // Add padding by reducing zoom level for two reasons:
-    // 1. Ensure contracts inside the buffered box are visible (0.3 zoom reduction)
-    // 2. Add visible buffer between box edges and panel edges (additional 0.3 zoom reduction)
-    const finalZoom = Math.max(2, calculatedZoom - 0.6);
-    
-    console.log('🔍 [ZOOM] Box-to-screen calculation:', {
+    console.log('🔍 [ZOOM] Using Leaflet\'s precise getBoundsZoom calculation:', {
         mapSize: `${mapWidthPx}×${mapHeightPx}px`,
         boxSpan: `${latSpan.toFixed(4)}° × ${lngSpan.toFixed(4)}°`,
-        degreesPerPixel: { lat: degreesPerPixelLat.toFixed(6), lng: degreesPerPixelLng.toFixed(6) },
-        requiredDPP: requiredDegreesPerPixel.toFixed(6),
-        calculatedZoom: calculatedZoom.toFixed(2),
         finalZoom: finalZoom.toFixed(2),
-        strategy: 'Zoom with increased padding for visible box-to-panel buffer'
+        strategy: 'Leaflet getBoundsZoom() - measures actual viewport fit'
     });
     
     // Set view to center of box with calculated zoom
-    contractMap.setView([centerLat, centerLng], finalZoom, {
+    // Use the stored smart box center (geometric center of contracts) for consistency
+    const targetCenter = currentSmartBoxCenter || { lat: centerLat, lng: centerLng };
+    console.log('🎯 [CENTERING] Using Smart Box Center for setView:', {
+        smartBoxCenter: currentSmartBoxCenter ? `${currentSmartBoxCenter.lat.toFixed(6)}, ${currentSmartBoxCenter.lng.toFixed(6)}` : 'null',
+        visualCenter: `${centerLat.toFixed(6)}, ${centerLng.toFixed(6)}`,
+        targetCenter: `${targetCenter.lat.toFixed(6)}, ${targetCenter.lng.toFixed(6)}`,
+        usingGeometric: !!currentSmartBoxCenter,
+        finalZoom: finalZoom.toFixed(2)
+    });
+    
+    contractMap.setView([targetCenter.lat, targetCenter.lng], finalZoom, {
         animate: animate
     });
+    
+    // Immediately after setView, log what Leaflet actually did
+    setTimeout(() => {
+        const actualCenter = contractMap.getCenter();
+        console.log('🔍 [VERIFY] After setView - Leaflet center vs target:', {
+            targetSent: `${targetCenter.lat.toFixed(6)}, ${targetCenter.lng.toFixed(6)}`,
+            actualResult: `${actualCenter.lat.toFixed(6)}, ${actualCenter.lng.toFixed(6)}`,
+            match: Math.abs(targetCenter.lat - actualCenter.lat) < 0.000001 && 
+                   Math.abs(targetCenter.lng - actualCenter.lng) < 0.000001,
+            difference: {
+                lat: (actualCenter.lat - targetCenter.lat).toFixed(6),
+                lng: (actualCenter.lng - targetCenter.lng).toFixed(6)
+            }
+        });
+    }, animate ? 100 : 50);
+    
+    // Update debug displays with calculated smart box center
+    setTimeout(() => {
+        updateDebugCenterMarker();
+        updateDebugMapPanelCenter();
+    }, animate ? 600 : 200);
     
     // Log final result after animation completes
     setTimeout(() => {
@@ -393,12 +449,26 @@ function getUserMapPreferences() {
         'caribbean', 'europe', 'asia-pacific', 'other-international'
     ];
     
+    console.log('🔍 [PREF DEBUG] Reading preferences from checkboxes...');
+    
     regions.forEach(region => {
-        const checkbox = document.getElementById(`pref-${region}`);
-        preferences[region] = checkbox ? checkbox.checked : false;
+        const checkboxId = `pref-${region}`;
+        const checkbox = document.getElementById(checkboxId);
+        const isChecked = checkbox ? checkbox.checked : false;
+        preferences[region] = isChecked;
+        
+        // Enhanced debugging for Alaska specifically
+        if (region === 'alaska') {
+            console.log(`🔍 [ALASKA PREF] Checkbox #${checkboxId}:`, {
+                exists: !!checkbox,
+                checked: isChecked,
+                element: checkbox
+            });
+        }
     });
     
     console.log('🗺️ Current user map preferences:', preferences);
+    console.log('🎯 [CRITICAL] Alaska preference value:', preferences.alaska);
     return preferences;
 }
 
@@ -433,17 +503,53 @@ function filterContractsByPreferences(contracts) {
     if (!contracts || contracts.length === 0) {
         return [];
     }
-    
+
     const preferences = getUserMapPreferences();
+    console.log('🔍 [FILTER DEBUG] Current preferences:', preferences);
+    console.log('🔍 [FILTER DEBUG] Alaska preference specifically:', preferences.alaska);
+    
+    // EMERGENCY DEBUG: Check Alaska checkbox directly
+    const alaskaCheckbox = document.getElementById('pref-alaska');
+    console.log('🚨 [EMERGENCY DEBUG] Alaska checkbox direct check:', {
+        exists: !!alaskaCheckbox,
+        checked: alaskaCheckbox?.checked,
+        element: alaskaCheckbox
+    });
+
     const filtered = contracts.filter(contract => {
         const region = getContractRegion(contract);
         const isIncluded = preferences[region] === true;
         
-        console.log(`📍 Contract ${contract.hospital_name}: region=${region}, included=${isIncluded}`);
+        // Extra debug for Alaska contracts
+        if (region === 'alaska') {
+            console.log(`� [ALASKA CONTRACT] ${contract.hospital_name}:`, {
+                hospital: contract.hospital_name,
+                city: contract.city, 
+                state: contract.state,
+                lat: contract.latitude,
+                lng: contract.longitude,
+                detectedRegion: region,
+                alaskaPreference: preferences.alaska,
+                willBeIncluded: isIncluded
+            });
+        } else {
+            console.log(`�📍 Contract ${contract.hospital_name}: region=${region}, included=${isIncluded}`);
+        }
         return isIncluded;
-    });
+    });    console.log(`🎯 Filtered ${contracts.length} contracts → ${filtered.length} contracts`);
     
-    console.log(`🎯 Filtered ${contracts.length} contracts → ${filtered.length} contracts`);
+    // Additional debugging for Alaska specifically
+    const alaskaContracts = contracts.filter(c => getContractRegion(c) === 'alaska');
+    console.log(`🔍 [ALASKA DEBUG] Found ${alaskaContracts.length} Alaska contracts in total:`, 
+        alaskaContracts.map(c => `${c.hospital_name} (${c.city}, ${c.state})`));
+    const filteredAlaskaContracts = filtered.filter(c => getContractRegion(c) === 'alaska');
+    console.log(`🔍 [ALASKA DEBUG] ${filteredAlaskaContracts.length} Alaska contracts included in filtered result:`, 
+        filteredAlaskaContracts.map(c => `${c.hospital_name} (${c.city}, ${c.state})`));
+    
+    // Show what contracts ARE included
+    console.log(`🔍 [INCLUDED] ${filtered.length} contracts included:`, 
+        filtered.map(c => `${c.hospital_name} (${c.city}, ${c.state}) - region: ${getContractRegion(c)}`));
+    
     return filtered;
 }
 
@@ -451,8 +557,16 @@ function filterContractsByPreferences(contracts) {
  * Calculate smart box bounds around filtered contracts with buffer
  */
 function calculateSmartBox(contracts) {
+    console.log('🚨 [SMART BOX DEBUG] calculateSmartBox called with contracts:', 
+        contracts?.map(c => `${c.hospital_name} (${c.city}, ${c.state}) - lat:${c.latitude}, lng:${c.longitude}`) || 'none');
+    
     if (!contracts || contracts.length === 0) {
         console.log('📦 No contracts for smart box - using CONUS default');
+        // Set smart box center to CONUS center
+        currentSmartBoxCenter = {
+            lat: (REGION_BOUNDARIES.conus.latMin + REGION_BOUNDARIES.conus.latMax) / 2,
+            lng: (REGION_BOUNDARIES.conus.lngMin + REGION_BOUNDARIES.conus.lngMax) / 2
+        };
         return REGION_BOUNDARIES.conus;
     }
     
@@ -546,9 +660,17 @@ function calculateSmartBox(contracts) {
         lngMax: rawBox.lngMax + lngBuffer
     };
     
+    // Calculate and store the geometric center of the filtered contracts
+    const smartBoxCenter = {
+        lat: (rawBox.latMin + rawBox.latMax) / 2, // Center of contracts (before buffer)
+        lng: (rawBox.lngMin + rawBox.lngMax) / 2
+    };
+    currentSmartBoxCenter = smartBoxCenter;
+    
     console.log('📦 Smart box calculated:', { 
         rawBox, 
         smartBox, 
+        smartBoxCenter: { lat: smartBoxCenter.lat.toFixed(4), lng: smartBoxCenter.lng.toFixed(4) },
         buffer: { lat: latBuffer, lng: lngBuffer },
         contracts: coords.length,
         contractFacilities: coords.map(c => c.facility)
@@ -609,9 +731,12 @@ function calculatePreciseZoomForSmartBox(smartBox) {
  * Add or update the orange smart box overlay for debugging
  */
 function showSmartBoxOverlay(bounds) {
-    // Remove existing overlay
+    // Remove existing overlay and debug label
     if (smartBoxOverlay && contractMap) {
         contractMap.removeLayer(smartBoxOverlay);
+    }
+    if (debugZoomLabel && contractMap) {
+        contractMap.removeLayer(debugZoomLabel);
     }
     
     if (!bounds || !contractMap) return;
@@ -628,6 +753,10 @@ function showSmartBoxOverlay(bounds) {
     });
     
     smartBoxOverlay = rectangle.addTo(contractMap);
+    
+    // Add zoom level display in the smart box
+    updateDebugZoomLabel(bounds);
+    
     console.log('🟠 Smart box overlay added:', bounds);
 }
 
@@ -639,6 +768,153 @@ function hideSmartBoxOverlay() {
         contractMap.removeLayer(smartBoxOverlay);
         smartBoxOverlay = null;
         console.log('🟠 Smart box overlay removed');
+    }
+    if (debugZoomLabel && contractMap) {
+        contractMap.removeLayer(debugZoomLabel);
+        debugZoomLabel = null;
+        console.log('🔍 Debug zoom label removed');
+    }
+}
+
+/**
+ * Update or create debug zoom level label in the smart box
+ */
+function updateDebugZoomLabel(bounds) {
+    if (!contractMap || !bounds) return;
+    
+    // Remove existing label
+    if (debugZoomLabel) {
+        contractMap.removeLayer(debugZoomLabel);
+    }
+    
+    // Calculate center of smart box for label placement
+    const centerLat = (bounds.latMin + bounds.latMax) / 2;
+    const centerLng = (bounds.lngMin + bounds.lngMax) / 2;
+    
+    // Create zoom level label
+    const currentZoom = contractMap.getZoom();
+    debugZoomLabel = L.marker([centerLat, centerLng], {
+        icon: L.divIcon({
+            className: 'debug-zoom-label',
+            html: `<div style="
+                background: rgba(255, 120, 0, 0.9);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 14px;
+                text-align: center;
+                border: 2px solid #ff7800;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                white-space: nowrap;
+            ">Zoom: ${currentZoom.toFixed(2)}</div>`,
+            iconSize: [80, 30],
+            iconAnchor: [40, 15]
+        })
+    }).addTo(contractMap);
+}
+
+/**
+ * Update or create debug center coordinates marker showing the smart box center
+ */
+function updateDebugCenterMarker() {
+    if (!contractMap) return;
+    
+    // Remove existing marker
+    if (debugCenterMarker) {
+        contractMap.removeLayer(debugCenterMarker);
+    }
+    
+    // Use the stored smart box center (center of filtered contracts)
+    if (!currentSmartBoxCenter) {
+        console.log('🔍 No smart box center calculated yet');
+        return;
+    }
+    
+    const centerToShow = currentSmartBoxCenter;
+    const labelText = `Smart Box Center: ${centerToShow.lat.toFixed(4)}, ${centerToShow.lng.toFixed(4)}`;
+    
+    // Create center coordinates marker slightly offset from actual center
+    const offsetLat = centerToShow.lat + 1.0; // Offset more clearly north to distinguish from red label
+    debugCenterMarker = L.marker([offsetLat, centerToShow.lng], {
+        icon: L.divIcon({
+            className: 'debug-center-label',
+            html: `<div style="
+                background: rgba(33, 150, 243, 0.9);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 12px;
+                text-align: center;
+                border: 2px solid #2196f3;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                white-space: nowrap;
+            ">${labelText}</div>`,
+            iconSize: [180, 30],
+            iconAnchor: [90, 30] // Anchor at bottom center so it appears above the actual center
+        })
+    }).addTo(contractMap);
+}
+
+/**
+ * Remove debug center coordinates marker
+ */
+function hideDebugCenterMarker() {
+    if (debugCenterMarker && contractMap) {
+        contractMap.removeLayer(debugCenterMarker);
+        debugCenterMarker = null;
+        console.log('🎯 Debug center marker removed');
+    }
+}
+
+/**
+ * Update or create map panel center indicator (shows actual viewport center)
+ */
+function updateDebugMapPanelCenter() {
+    if (!contractMap) return;
+    
+    // Remove existing panel center marker
+    if (debugMapPanelCenter) {
+        contractMap.removeLayer(debugMapPanelCenter);
+    }
+    
+    // Get actual map viewport center
+    const mapCenter = contractMap.getCenter();
+    const lat = mapCenter.lat.toFixed(4);
+    const lng = mapCenter.lng.toFixed(4);
+    
+    // Create map panel center marker at exact center
+    debugMapPanelCenter = L.marker([mapCenter.lat, mapCenter.lng], {
+        icon: L.divIcon({
+            className: 'debug-panel-center',
+            html: `<div style="
+                background: rgba(255, 0, 0, 0.9);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 12px;
+                text-align: center;
+                border: 2px solid #ff0000;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                white-space: nowrap;
+                transform: translate(-50%, -100%);
+            ">Leaflet Map Center: ${lat}, ${lng}</div>`,
+            iconSize: [160, 30],
+            iconAnchor: [80, 40] // Position label above the center point
+        })
+    }).addTo(contractMap);
+}
+
+/**
+ * Remove debug map panel center marker
+ */
+function hideDebugMapPanelCenter() {
+    if (debugMapPanelCenter && contractMap) {
+        contractMap.removeLayer(debugMapPanelCenter);
+        debugMapPanelCenter = null;
+        console.log('🗺️ Debug map panel center marker removed');
     }
 }
 
@@ -658,28 +934,183 @@ function fitMapToAllContracts(contracts, animate = true) {
  * Debounced function for handling map updates on resize
  */
 let resizeTimeout;
-function handleMapResize() {
+let panelResizeTimeout;
+
+function handleMapResize(source = 'window') {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
         if (contractMap) {
-            console.log('🔄 [TRIGGER] Window resize detected');
-            contractMap.invalidateSize();
-            
-            const contracts = window.logbookApp ? window.logbookApp.contracts : [];
-            if (contracts && contracts.length > 0) {
-                executeMapUpdateSequence(contracts, 'resize');
-            }
+            console.log(`🔄 [TRIGGER] ${source} resize detected`);
+            recalibrateMapAndCenter('resize');
         }
     }, 300);
 }
 
+function handlePanelResize(source = 'panel') {
+    clearTimeout(panelResizeTimeout);
+    panelResizeTimeout = setTimeout(() => {
+        if (contractMap) {
+            console.log(`🔄 [TRIGGER] ${source} size change detected`);
+            recalibrateMapAndCenter('panel-resize');
+        }
+    }, 200); // Shorter delay for panel changes
+}
+
 /**
- * Initialize smart box system with resize handling
+ * Central function to handle map invalidation, smart box recalculation, and recentering
+ */
+function recalibrateMapAndCenter(trigger) {
+    console.log(`🎯 [RECALIBRATE] Starting map recalibration for: ${trigger}`);
+    
+    if (!contractMap) {
+        console.error('❌ Map not ready for recalibration');
+        return;
+    }
+    
+    // Step 1: Force map size recalculation
+    contractMap.invalidateSize();
+    console.log('✅ [SIZE] Map size invalidated');
+    
+    // Step 2: Re-execute the map update sequence if contracts are loaded
+    const contracts = window.logbookApp ? window.logbookApp.contracts : [];
+    if (contracts && contracts.length > 0 && contractsLoaded) {
+        console.log(`🔄 [SEQUENCE] Re-executing map update sequence for ${trigger}`);
+        executeMapUpdateSequence(contracts, trigger);
+    } else {
+        console.log('ℹ️ [SKIP] No contracts loaded, skipping sequence update');
+    }
+}
+
+/**
+ * Initialize smart box system with comprehensive resize handling and debug displays
  */
 function initializeSmartBoxSystem() {
-    // Add resize event listener
-    window.addEventListener('resize', handleMapResize);
-    console.log('📦 Smart box system initialized with resize handling');
+    // Add window resize event listener
+    window.addEventListener('resize', () => handleMapResize('window'));
+    
+    // Add ResizeObserver for contract panel size changes
+    if (window.ResizeObserver) {
+        const contractPanelObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                console.log('📏 [PANEL] Contract panel size change detected:', {
+                    width: entry.contentRect.width,
+                    height: entry.contentRect.height
+                });
+                handlePanelResize('left-panel');
+            }
+        });
+        
+        // Observe the left panel (contract panel)
+        const leftPanel = document.getElementById('left-panel');
+        if (leftPanel) {
+            contractPanelObserver.observe(leftPanel);
+            console.log('👀 [OBSERVER] Watching left panel for size changes');
+        }
+        
+        // Also observe the map container itself
+        const mapContainer = document.getElementById('map');
+        if (mapContainer) {
+            const mapObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    console.log('📏 [MAP] Map container size change detected:', {
+                        width: entry.contentRect.width,
+                        height: entry.contentRect.height
+                    });
+                    handlePanelResize('map-container');
+                }
+            });
+            mapObserver.observe(mapContainer);
+            console.log('👀 [OBSERVER] Watching map container for size changes');
+        }
+    } else {
+        console.warn('⚠️ ResizeObserver not supported, falling back to window resize only');
+    }
+    
+    // Add MutationObserver for style changes that might affect layout
+    if (window.MutationObserver) {
+        const layoutObserver = new MutationObserver((mutations) => {
+            let shouldRecalibrate = false;
+            
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    // Check if the style change affects display, width, or visibility
+                    const target = mutation.target;
+                    const computedStyle = window.getComputedStyle(target);
+                    
+                    if (target.id === 'left-panel' || target.closest('#left-panel')) {
+                        console.log('🎨 [STYLE] Layout-affecting style change detected on panel element');
+                        shouldRecalibrate = true;
+                    }
+                }
+            });
+            
+            if (shouldRecalibrate) {
+                handlePanelResize('style-change');
+            }
+        });
+        
+        // Observe style changes on the left panel and its children
+        const leftPanel = document.getElementById('left-panel');
+        if (leftPanel) {
+            layoutObserver.observe(leftPanel, {
+                attributes: true,
+                attributeFilter: ['style', 'class'],
+                subtree: true
+            });
+            console.log('👀 [OBSERVER] Watching for layout-affecting style changes');
+        }
+    }
+    
+    // Add map event listeners for debug displays
+    if (contractMap) {
+        contractMap.on('zoomend', updateDebugDisplays);
+        contractMap.on('moveend', updateDebugDisplays);
+        
+        // Initial display of debug markers
+        updateDebugCenterMarker();
+        updateDebugMapPanelCenter();
+    }
+    
+    console.log('📦 Smart box system initialized with comprehensive resize handling and debug displays');
+}
+
+/**
+ * Update all debug displays when map changes
+ */
+function updateDebugDisplays() {
+    // Wait a small delay to ensure map has settled after any animation/repositioning
+    setTimeout(() => {
+        // Update center marker (shows where map thinks it should center)
+        updateDebugCenterMarker();
+        
+        // Update map panel center marker (shows actual viewport center)  
+        updateDebugMapPanelCenter();
+        
+        // Update zoom label if smart box is visible
+        if (smartBoxOverlay && contractMap) {
+            // Get smart box bounds from existing overlay
+            const bounds = smartBoxOverlay.getBounds();
+            if (bounds) {
+                const smartBoxBounds = {
+                    latMin: bounds.getSouth(),
+                    latMax: bounds.getNorth(),
+                    lngMin: bounds.getWest(),
+                    lngMax: bounds.getEast()
+                };
+                updateDebugZoomLabel(smartBoxBounds);
+            }
+        }
+        
+        // Log the coordinates for debugging timing issues
+        const currentMapCenter = contractMap.getCenter();
+        console.log('🔍 [DEBUG TIMING] Centers at update:', {
+            smartBoxCenter: currentSmartBoxCenter ? `${currentSmartBoxCenter.lat.toFixed(4)}, ${currentSmartBoxCenter.lng.toFixed(4)}` : 'not set',
+            leafletMapCenter: `${currentMapCenter.lat.toFixed(4)}, ${currentMapCenter.lng.toFixed(4)}`,
+            match: currentSmartBoxCenter ? 
+                (Math.abs(currentSmartBoxCenter.lat - currentMapCenter.lat) < 0.001 && 
+                 Math.abs(currentSmartBoxCenter.lng - currentMapCenter.lng) < 0.001) : false
+        });
+    }, 100);
 }
 
 /**
@@ -687,10 +1118,21 @@ function initializeSmartBoxSystem() {
  */
 function updateSmartBoxOnPreferenceChange() {
     console.log('🔄 [TRIGGER] Regional preferences changed');
-    const contracts = window.logbookApp ? window.logbookApp.contracts : [];
-    if (contracts && contracts.length > 0) {
-        executeMapUpdateSequence(contracts, 'preference-change');
+    
+    // Ensure map size is correct before recalculating bounds
+    if (contractMap) {
+        console.log('🔄 [SIZE] Invalidating map size before preference-based update');
+        contractMap.invalidateSize();
     }
+    
+    // Add a small delay to ensure DOM checkbox states have been fully updated
+    setTimeout(() => {
+        console.log('🔄 [DELAYED] Reading preferences after DOM update delay');
+        const contracts = window.logbookApp ? window.logbookApp.contracts : [];
+        if (contracts && contracts.length > 0) {
+            executeMapUpdateSequence(contracts, 'preference-change');
+        }
+    }, 50); // Small delay to ensure checkbox states are updated
 }
 
 /**

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Debug Test</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 500px; width: 100%; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Map Debug Test</h1>
+    <div id="map"></div>
+    <p>Try zooming and panning the map to test the debug displays.</p>
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="js/map.js"></script>
+    <script>
+        // Test the map initialization and debug features
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Testing map debug features...');
+            
+            // Initialize the map
+            initializeMap();
+            
+            // Create some test contract data
+            const testContracts = [
+                { latitude: 47.6062, longitude: -122.3321, name: "Seattle Children's Hospital" },
+                { latitude: 25.7617, longitude: -80.1918, name: "Miami General Hospital" },
+                { latitude: 33.4484, longitude: -112.0740, name: "Phoenix Medical Center" },
+                { latitude: 41.8781, longitude: -87.6298, name: "Chicago Regional" }
+            ];
+            
+            // Wait for map to initialize, then test the debug features
+            setTimeout(() => {
+                console.log('Running map sequence with test data...');
+                executeMapUpdateSequence(testContracts, 'debug-test');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -29,19 +29,19 @@
       <div class="profile-section">
         <h3>Personal Information</h3>
         <div class="profile-field">
-          <label>First Name:</label>
-          <input type="text" id="first-name" disabled>
-          <button data-field="first-name" class="edit-btn">Edit</button>
+          <label for="first-name">First Name:</label>
+          <input type="text" id="first-name" name="first_name" disabled>
+          <div class="display-value" id="first-name-display"></div>
         </div>
         <div class="profile-field">
-          <label>Last Name:</label>
-          <input type="text" id="last-name" disabled>
-          <button data-field="last-name" class="edit-btn">Edit</button>
+          <label for="last-name">Last Name:</label>
+          <input type="text" id="last-name" name="last_name" disabled>
+          <div class="display-value" id="last-name-display"></div>
         </div>
         <div class="profile-field">
-          <label>Full Name:</label>
-          <input type="text" id="full-name" disabled>
-          <button data-field="full-name" class="edit-btn">Edit</button>
+          <label for="full-name">Full Name:</label>
+          <input type="text" id="full-name" name="full_name" disabled>
+          <div class="display-value" id="full-name-display"></div>
         </div>
       </div>
 
@@ -147,10 +147,10 @@
         </div>
       </div>
 
-      <!-- Manual Profile Completion -->
-      <div class="profile-section">
+      <!-- Manual Profile Completion - Only visible in edit mode -->
+      <div class="profile-section edit-only" style="display: none;">
         <h3>Profile Status</h3>
-        <button id="mark-profile-complete" class="edit-btn" style="background: #28a745; padding: 8px 16px;">
+        <button id="mark-profile-complete" class="primary-btn">
           Mark Profile as Complete
         </button>
         <small style="display: block; margin-top: 5px; color: #666;">
@@ -158,25 +158,30 @@
         </small>
       </div>
 
-      <!-- Save Profile Section -->
+      <!-- Form Actions -->
       <div class="profile-section form-actions">
-        <button id="save-profile-btn" class="primary-btn" style="min-width: 200px; font-size: 16px; padding: 12px 30px;">
-          💾 Save Profile
-        </button>
-        <div id="profile-save-status" style="margin-top: 15px; font-size: 14px; min-height: 20px; text-align: center;"></div>
+        <!-- Display Mode Actions -->
+        <div class="display-actions">
+          <button type="button" id="edit-profile-btn" class="primary-btn">Edit Profile</button>
+          <button type="button" id="close-profile-display-btn" class="secondary-btn">Close</button>
+        </div>
+        
+        <!-- Edit Mode Actions -->
+        <div class="edit-actions" style="display: none;">
+          <button type="button" id="save-profile-btn" class="primary-btn">Save Profile</button>
+          <button type="button" id="cancel-profile-edit-btn" class="secondary-btn">Cancel</button>
+        </div>
       </div>
-    </div>
-    
-    <!-- Danger Zone -->
-    <div class="danger-zone" style="padding: 20px; margin-top: 30px; border: 2px solid #dc3545; border-radius: 8px; background-color: #fff5f5;">
-      <h3 style="margin: 0 0 20px 0; padding: 0 0 10px 0; color: #dc3545; border-bottom: 1px solid #dc3545;">⚠️ Danger Zone</h3>
-      <p style="margin: 0 0 20px 0; padding: 0; color: #721c24; font-weight: 500;">
-        <strong>Warning:</strong> This action will permanently delete your entire account, 
-        all profile data, contract history, and cannot be undone.
-      </p>
-      <button id="profile-delete-btn" class="profile-delete-btn" type="button" style="margin: 0; padding: 10px 16px; background: #dc3545; color: white; border: 1px solid #dc3545; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer;">
-        🗑️ DELETE EVERYTHING
-      </button>
+
+      <!-- Danger Zone - Only visible in edit mode -->
+      <div class="danger-zone edit-only" style="display: none; padding: 20px; margin-top: 30px; border: 2px solid #dc3545; border-radius: 8px; background-color: #fff5f5;">
+        <h3 style="margin: 0 0 20px 0; padding: 0 0 10px 0; color: #dc3545; border-bottom: 1px solid #dc3545;">⚠️ Danger Zone</h3>
+        <p style="margin: 0 0 20px 0; padding: 0; color: #721c24; font-weight: 500;">
+          <strong>Warning:</strong> This action will permanently delete your entire account, 
+          all profile data, contract history, and cannot be undone.
+        </p>
+        <button id="profile-delete-btn" class="danger-btn">🗑️ DELETE EVERYTHING</button>
+      </div>
     </div>
 
   <div id="profile-error" class="error-message" style="display: none;"></div>

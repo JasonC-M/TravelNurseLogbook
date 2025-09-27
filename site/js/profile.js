@@ -4,12 +4,12 @@
 class ProfileManager {
   constructor() {
     this.userProfile = null;
-    this.userContracts = [];
-    this.isProfileOpen = false;
-    this.mapPreferencesLoaded = false;
+    this.editedFields = {};
     this.hasUnsavedMapChanges = false;
     this.originalMapPreferences = null;
-    this.initializeEventHandlers();
+    this.isInitialized = false;
+    this.contractStats = { total: 0, active: 0, completed: 0 };
+    this.currentMode = 'display'; // 'display' or 'edit'
   }
 
   // Initialize event handlers for profile form
@@ -45,16 +45,9 @@ class ProfileManager {
     }
   }
 
-  // Setup navigation warning for unsaved changes
+    // Setup navigation warning for unsaved changes (disabled)
   setupNavigationWarning() {
-    window.addEventListener('beforeunload', (event) => {
-      if (this.hasUnsavedMapChanges) {
-        const message = 'You have unsaved map preference changes. Are you sure you want to leave?';
-        event.preventDefault();
-        event.returnValue = message; // Required for Chrome
-        return message; // Required for other browsers
-      }
-    });
+    // Navigation warnings removed for simpler UX
   }
 
   // Create initial profile for new users
@@ -202,15 +195,31 @@ class ProfileManager {
     if (emailEl) emailEl.textContent = user.email;
     if (createdEl) createdEl.textContent = new Date(user.created_at).toLocaleDateString();
 
-    // Personal information
+    // Personal information - populate both input fields and display values
     if (this.userProfile) {
+      // Input fields
       const firstNameEl = document.getElementById('first-name');
       const lastNameEl = document.getElementById('last-name');
       const fullNameEl = document.getElementById('full-name');
       
-      if (firstNameEl) firstNameEl.value = this.userProfile.first_name || '';
-      if (lastNameEl) lastNameEl.value = this.userProfile.last_name || '';
-      if (fullNameEl) fullNameEl.value = this.userProfile.full_name || '';
+      // Display values
+      const firstNameDisplay = document.getElementById('first-name-display');
+      const lastNameDisplay = document.getElementById('last-name-display');
+      const fullNameDisplay = document.getElementById('full-name-display');
+      
+      const firstName = this.userProfile.first_name || '';
+      const lastName = this.userProfile.last_name || '';
+      const fullName = this.userProfile.full_name || '';
+      
+      // Populate inputs
+      if (firstNameEl) firstNameEl.value = firstName;
+      if (lastNameEl) lastNameEl.value = lastName;
+      if (fullNameEl) fullNameEl.value = fullName;
+      
+      // Populate display values
+      if (firstNameDisplay) firstNameDisplay.textContent = firstName || '(Not set)';
+      if (lastNameDisplay) lastNameDisplay.textContent = lastName || '(Not set)';
+      if (fullNameDisplay) fullNameDisplay.textContent = fullName || '(Not set)';
     }
 
     // Map preferences (only load if not already loaded)
@@ -256,13 +265,7 @@ class ProfileManager {
 
   // Close profile menu
   closeProfile() {
-    // Check for unsaved changes before closing
-    if (this.hasUnsavedMapChanges) {
-      const confirmClose = confirm('You have unsaved map preference changes. Are you sure you want to close without saving?');
-      if (!confirmClose) {
-        return; // Don't close if user cancels
-      }
-    }
+    // Close without confirmation (simplified UX)
 
     const slideout = document.getElementById('profile-slideout');
     if (!slideout) {
@@ -650,12 +653,20 @@ class ProfileManager {
       'caribbean', 'europe', 'asia-pacific', 'other-international'
     ];
 
-    // Add change event listeners to detect unsaved changes
+    // Add change event listeners to detect unsaved changes (no auto-save)
     regions.forEach(region => {
       const checkbox = document.getElementById(`pref-${region}`);
       if (checkbox) {
         checkbox.addEventListener('change', () => {
-          this.detectMapPreferenceChanges();
+          // Mark that preferences have changed but don't auto-save
+          this.hasUnsavedMapChanges = true;
+          console.log('📍 Map preference changed, will save when form is saved');
+          
+          // Update map display immediately for live preview (but don't save to database)
+          if (window.MapController && window.MapController.updateSmartBox) {
+            console.log('🔄 [PROFILE] Regional preference changed - updating map display (preview only)');
+            window.MapController.updateSmartBox();
+          }
         });
       }
     });
@@ -668,27 +679,10 @@ class ProfileManager {
 
 
 
-  // Detect if map preferences have changed from original
+  // Detect if map preferences have changed from original (simplified - no unsaved state UI)
   detectMapPreferenceChanges() {
-    const regions = [
-      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
-      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
-      'caribbean', 'europe', 'asia-pacific', 'other-international'
-    ];
-
-    let hasChanges = false;
-    regions.forEach(region => {
-      const checkbox = document.getElementById(`pref-${region}`);
-      if (checkbox) {
-        const currentValue = checkbox.checked;
-        const originalValue = this.originalMapPreferences ? this.originalMapPreferences[region] : false;
-        if (currentValue !== originalValue) {
-          hasChanges = true;
-        }
-      }
-    });
-
-    this.hasUnsavedMapChanges = hasChanges;
+    // No longer needed since preferences auto-save, but keeping method for compatibility
+    this.hasUnsavedMapChanges = false;
     this.updateMapPreferencesStatus();
   }
 
@@ -698,42 +692,29 @@ class ProfileManager {
     const profileSaveBtn = document.getElementById('save-profile-btn');
     const profileStatusEl = document.getElementById('profile-save-status');
     
+    // Remove all status messages
     if (statusEl) {
-      if (this.hasUnsavedMapChanges) {
-        statusEl.innerHTML = '<span style="color: #dc3545;">⚠️ Unsaved map preference changes</span>';
-      } else {
-        statusEl.innerHTML = 'Map preferences will be saved with your profile';
-      }
+      statusEl.innerHTML = '';
     }
 
-    // Update unified save button and status
-    if (profileSaveBtn && profileStatusEl) {
-      if (this.hasUnsavedMapChanges) {
-        // Remove primary class and add danger class for red state
-        profileSaveBtn.className = 'danger-btn';
-        profileSaveBtn.style.minWidth = '200px';
-        profileSaveBtn.style.fontSize = '16px';
-        profileSaveBtn.style.padding = '12px 30px';
-        profileSaveBtn.textContent = '⚠️ Save Profile (Unsaved Changes)';
-        profileStatusEl.innerHTML = '<span style="color: #dc3545;">You have unsaved map preference changes</span>';
-      } else {
-        // Reset to primary class for green state
-        profileSaveBtn.className = 'primary-btn';
-        profileSaveBtn.style.minWidth = '200px';
-        profileSaveBtn.style.fontSize = '16px';
-        profileSaveBtn.style.padding = '12px 30px';
-        profileSaveBtn.textContent = '💾 Save Profile';
-        profileStatusEl.innerHTML = '<span style="color: #28a745;">All changes saved</span>';
-      }
+    // Keep button styling simple like contract form
+    if (profileSaveBtn) {
+      profileSaveBtn.className = 'primary-btn';
+      profileSaveBtn.style.minWidth = '200px';
+      profileSaveBtn.style.fontSize = '16px';
+      profileSaveBtn.style.padding = '12px 30px';
+      profileSaveBtn.textContent = 'Save Profile';
+    }
+    
+    // Remove status messages
+    if (profileStatusEl) {
+      profileStatusEl.innerHTML = '';
     }
   }
 
   // Reset map preferences to default or last saved state
   resetMapPreferences() {
-    if (this.hasUnsavedMapChanges) {
-      const confirmReset = confirm('This will discard your unsaved changes. Are you sure?');
-      if (!confirmReset) return;
-    }
+    // Reset without confirmation (simplified UX)
 
     // Reset to original loaded preferences
     if (this.originalMapPreferences) {
@@ -749,6 +730,53 @@ class ProfileManager {
     this.updateMapPreferencesStatus();
   }
 
+  // Save only map preferences (called automatically when checkboxes change)
+  async saveMapPreferencesOnly() {
+    try {
+      console.log('📍 Auto-saving map preferences...');
+
+      const user = window.auth.getCurrentUser();
+      if (!user) {
+        console.log('❌ User not logged in, skipping map preferences save');
+        return;
+      }
+
+      // Gather current map preferences
+      const regions = [
+        'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
+        'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
+        'caribbean', 'europe', 'asia-pacific', 'other-international'
+      ];
+
+      const preferences = {};
+      regions.forEach(region => {
+        const checkbox = document.getElementById(`pref-${region}`);
+        if (checkbox) {
+          preferences[region] = checkbox.checked;
+        }
+      });
+
+      // Save just the map preferences
+      const profileData = {
+        map_preferences: preferences
+      };
+
+      console.log('📍 Saving map preferences:', preferences);
+      const result = await window.apiClient.updateProfile(profileData);
+
+      if (result.success) {
+        console.log('✅ Map preferences saved successfully');
+        // Update the stored original preferences
+        this.originalMapPreferences = { ...preferences };
+        this.hasUnsavedMapChanges = false;
+      } else {
+        console.error('❌ Failed to save map preferences:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Error saving map preferences:', error);
+    }
+  }
+
   // Save complete profile including map preferences
   async saveCompleteProfile() {
     try {
@@ -760,38 +788,56 @@ class ProfileManager {
         return;
       }
 
-      // Gather all profile data including map preferences
+      // Gather current map preferences from form
+      const regions = [
+        'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
+        'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
+        'caribbean', 'europe', 'asia-pacific', 'other-international'
+      ];
+
+      const mapPreferences = {};
+      regions.forEach(region => {
+        const checkbox = document.getElementById(`pref-${region}`);
+        if (checkbox) {
+          mapPreferences[region] = checkbox.checked;
+        }
+      });
+
+      // Gather profile form fields
+      const firstName = document.getElementById('first-name')?.value?.trim() || this.userProfile?.first_name || '';
+      const lastName = document.getElementById('last-name')?.value?.trim() || this.userProfile?.last_name || '';
+      const fullName = document.getElementById('full-name')?.value?.trim() || this.userProfile?.full_name || '';
+
+      // Prepare profile data with all fields that exist in the database schema
       const profileData = {
-        first_name: this.userProfile?.first_name || '',
-        last_name: this.userProfile?.last_name || '',
-        full_name: this.userProfile?.full_name || '',
-        email: this.userProfile?.email || user.email,
-        phone: this.userProfile?.phone || '',
-        specialization: this.userProfile?.specialization || '',
-        license_number: this.userProfile?.license_number || '',
-        profile_complete: this.isProfileComplete(this.userProfile),
-        first_login: false
+        map_preferences: mapPreferences
       };
 
-      // Add current map preferences if there are unsaved changes
-      if (this.hasUnsavedMapChanges) {
-        const regions = [
-          'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
-          'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
-          'caribbean', 'europe', 'asia-pacific', 'other-international'
-        ];
-
-        const preferences = {};
-        regions.forEach(region => {
-          const checkbox = document.getElementById(`pref-${region}`);
-          if (checkbox) {
-            preferences[region] = checkbox.checked;
-          }
-        });
-
-        profileData.map_preferences = preferences;
-        console.log('📍 Including map preferences in save:', preferences);
+      // Add personal info fields if they have values (matching database schema)
+      if (firstName) profileData.first_name = firstName;
+      if (lastName) profileData.last_name = lastName;
+      if (fullName) profileData.full_name = fullName;
+      
+      // Ensure full_name is included for profile completion calculation
+      if (!fullName && (firstName || lastName)) {
+        profileData.full_name = `${firstName} ${lastName}`.trim();
       }
+      
+      // Add email (always include if available)
+      if (this.userProfile?.email || user.email) {
+        profileData.email = this.userProfile?.email || user.email;
+      }
+      
+      // Calculate profile completion based on updated data
+      const updatedProfile = { ...this.userProfile, ...profileData };
+      const isComplete = this.isProfileComplete(updatedProfile);
+      profileData.profile_complete = Boolean(isComplete); // Ensure it's always a boolean
+      profileData.first_login = false;
+
+      console.log('🔍 Sending profile data with all schema-matching fields');
+
+      console.log('📍 Saving profile with map preferences:', mapPreferences);
+      console.log('📋 Complete profile data being saved:', profileData);
 
       // Save to backend
       const result = await window.apiClient.updateProfile(profileData);
@@ -818,29 +864,183 @@ class ProfileManager {
         }
 
         // Notify map to update its filtering if preferences changed
-        if (profileData.map_preferences && window.MapController && window.MapController.updateUserPreferences) {
-          window.MapController.updateUserPreferences(profileData.map_preferences);
+        if (profileData.map_preferences && window.MapController && window.MapController.updateSmartBox) {
+          console.log('🗺️ Triggering map update after successful preference save');
+          window.MapController.updateSmartBox();
         }
 
+        // Switch back to display mode after successful save
+        setTimeout(() => {
+          this.switchToDisplayMode();
+        }, 1000); // Brief delay to show success message
+
       } else {
-        throw new Error(result.error || 'Failed to save profile');
+        console.error('❌ Profile save failed:', result);
+        throw new Error(result.error || result.message || 'Failed to save profile');
       }
 
     } catch (error) {
       console.error('❌ Error saving profile:', error);
+      console.error('❌ Full error details:', error);
       this.showProfileError('Failed to save profile: ' + error.message);
     }
   }
 
-  // Setup unified profile save button
+  // Setup unified profile save button and mode switching
   setupProfileSaveButton() {
     // Avoid duplicate handlers
     if (this.profileSaveHandlerSetup) return;
     this.profileSaveHandlerSetup = true;
 
+    // Display mode buttons
+    const editBtn = document.getElementById('edit-profile-btn');
+    const closeDisplayBtn = document.getElementById('close-profile-display-btn');
+    
+    // Edit mode buttons
     const saveBtn = document.getElementById('save-profile-btn');
+    const cancelEditBtn = document.getElementById('cancel-profile-edit-btn');
+
+    if (editBtn) {
+      editBtn.addEventListener('click', () => this.switchToEditMode());
+    }
+
+    if (closeDisplayBtn) {
+      closeDisplayBtn.addEventListener('click', () => this.closeProfile());
+    }
+
     if (saveBtn) {
       saveBtn.addEventListener('click', () => this.saveCompleteProfile());
+    }
+
+    if (cancelEditBtn) {
+      cancelEditBtn.addEventListener('click', () => this.cancelEdit());
+    }
+
+    // Set initial mode
+    this.switchToDisplayMode();
+  }
+
+  // Cancel edit and discard changes
+  cancelEdit() {
+    console.log('❌ Cancelling profile edit, discarding changes');
+    
+    // Reset any unsaved map preference changes
+    if (this.originalMapPreferences) {
+      const regions = Object.keys(this.originalMapPreferences);
+      regions.forEach(region => {
+        const checkbox = document.getElementById(`pref-${region}`);
+        if (checkbox) {
+          checkbox.checked = this.originalMapPreferences[region];
+        }
+      });
+      
+      // Update map display to reflect reverted preferences
+      if (window.MapController && window.MapController.updateSmartBox) {
+        console.log('🔄 [CANCEL] Reverting map display to saved preferences');
+        window.MapController.updateSmartBox();
+      }
+    }
+    
+    // Reset form fields to original values
+    if (this.userProfile) {
+      const firstNameField = document.getElementById('first-name');
+      const lastNameField = document.getElementById('last-name');
+      const fullNameField = document.getElementById('full-name');
+      
+      if (firstNameField) firstNameField.value = this.userProfile.first_name || '';
+      if (lastNameField) lastNameField.value = this.userProfile.last_name || '';
+      if (fullNameField) fullNameField.value = this.userProfile.full_name || '';
+    }
+    
+    // Clear any unsaved changes flags
+    this.hasUnsavedMapChanges = false;
+    
+    // Switch back to display mode
+    this.switchToDisplayMode();
+  }
+
+  // Switch to display mode
+  switchToDisplayMode() {
+    this.currentMode = 'display';
+    
+    // Show/hide mode-specific elements
+    const displayActions = document.querySelector('.display-actions');
+    const editActions = document.querySelector('.edit-actions');
+    const editOnlyElements = document.querySelectorAll('.edit-only');
+    
+    if (displayActions) displayActions.style.display = 'flex';
+    if (editActions) editActions.style.display = 'none';
+    
+    // Hide edit-only elements (Danger Zone, Profile Status)
+    editOnlyElements.forEach(el => el.style.display = 'none');
+    
+    // Disable form inputs and show display values
+    this.setFormFieldsMode('display');
+    
+    console.log('📋 Profile switched to display mode');
+  }
+
+  // Switch to edit mode
+  switchToEditMode() {
+    this.currentMode = 'edit';
+    
+    // Show/hide mode-specific elements
+    const displayActions = document.querySelector('.display-actions');
+    const editActions = document.querySelector('.edit-actions');
+    const editOnlyElements = document.querySelectorAll('.edit-only');
+    
+    if (displayActions) displayActions.style.display = 'none';
+    if (editActions) editActions.style.display = 'flex';
+    
+    // Show edit-only elements (Danger Zone, Profile Status)
+    editOnlyElements.forEach(el => el.style.display = 'block');
+    
+    // Enable form inputs and hide display values
+    this.setFormFieldsMode('edit');
+    
+    console.log('✏️ Profile switched to edit mode');
+  }
+
+  // Set form fields to display or edit mode
+  setFormFieldsMode(mode) {
+    const inputs = document.querySelectorAll('#profile-data input[type="text"]');
+    const displayValues = document.querySelectorAll('.display-value');
+    const checkboxes = document.querySelectorAll('#profile-data input[type="checkbox"]');
+    
+    inputs.forEach(input => {
+      if (mode === 'edit') {
+        input.disabled = false;
+        input.style.display = 'block';
+      } else {
+        input.disabled = true;
+        input.style.display = 'none';
+      }
+    });
+    
+    displayValues.forEach(displayValue => {
+      if (mode === 'display') {
+        displayValue.style.display = 'block';
+      } else {
+        displayValue.style.display = 'none';
+      }
+    });
+
+    // Handle map preference checkboxes
+    checkboxes.forEach(checkbox => {
+      if (mode === 'edit') {
+        checkbox.disabled = false;
+      } else {
+        checkbox.disabled = true;
+      }
+    });
+  }
+
+  // Close profile (used by close button in display mode)
+  closeProfile() {
+    // Close the profile slideout
+    const profileSlideout = document.getElementById('profile-slideout');
+    if (profileSlideout) {
+      profileSlideout.classList.remove('active');
     }
   }
 

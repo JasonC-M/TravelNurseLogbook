@@ -438,12 +438,12 @@ html, body {
 }
 
 .primary-btn {
-    background: #28a745;
+    background: #6c757d;
     color: white;
 }
 
 .primary-btn:hover {
-    background: #1e7e34;
+    background: #545b62;
 }
 
 .secondary-btn {
@@ -472,10 +472,7 @@ html, body {
     justify-content: flex-end;
 }
 
-/* Save Profile Button */
-#save-profile-btn:hover {
-    background: #1e7e34 !important;
-}
+/* Save Profile Button - Uses universal .primary-btn class */
 
 .edit-btn {
     background: #007bff;
@@ -507,9 +504,9 @@ html, body {
     margin: 8px 0;
 }
 
-/* Contract Form Styles */
+/* Contract Form Styles - Uses universal button classes */
 #contract-form button {
-    background: #007bff;
+    background: #6c757d;
     color: white;
     border: none;
     padding: 10px 16px;
@@ -520,7 +517,7 @@ html, body {
 }
 
 #contract-form button:hover {
-    background: #0056b3;
+    background: #545b62;
 }
 
 #contract-form button[type="button"] {
@@ -532,24 +529,24 @@ html, body {
 }
 
 #save-contract {
-    background: #28a745 !important;
+    background: #6c757d !important;
 }
 
 #save-contract:hover {
-    background: #1e7e34 !important;
+    background: #545b62 !important;
 }
 
 #cancel-contract {
-    background: #dc3545 !important;
+    background: #6c757d !important;
 }
 
 #cancel-contract:hover {
-    background: #c82333 !important;
+    background: #545b62 !important;
 }
 
 /* Contract Details Form Styles */
 #contract-details-form button {
-    background: #007bff;
+    background: #6c757d;
     color: white;
     border: none;
     padding: 10px 16px;
@@ -560,15 +557,15 @@ html, body {
 }
 
 #contract-details-form button:hover {
-    background: #0056b3;
+    background: #545b62;
 }
 
 #update-contract {
-    background: #28a745 !important;
+    background: #6c757d !important;
 }
 
 #update-contract:hover {
-    background: #1e7e34 !important;
+    background: #545b62 !important;
 }
 
 #delete-contract {
@@ -634,25 +631,25 @@ html, body {
     display: none;
 }
 
-/* Mode-specific button styling */
+/* Mode-specific button styling - All buttons use universal grey styling */
 .unified-contract-form .create-actions .btn-primary {
-    background: #28a745;
-    border-color: #28a745;
+    background: #6c757d;
+    border-color: #6c757d;
 }
 
 .unified-contract-form .create-actions .btn-primary:hover {
-    background: #218838;
-    border-color: #1e7e34;
+    background: #545b62;
+    border-color: #545b62;
 }
 
 .unified-contract-form .edit-actions .btn-primary {
-    background: #007bff;
-    border-color: #007bff;
+    background: #6c757d;
+    border-color: #6c757d;
 }
 
 .unified-contract-form .edit-actions .btn-primary:hover {
-    background: #0056b3;
-    border-color: #004085;
+    background: #545b62;
+    border-color: #545b62;
 }
 
 /* Danger Zone Styling */

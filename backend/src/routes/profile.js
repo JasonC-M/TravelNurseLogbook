@@ -67,19 +67,23 @@ router.get('/', asyncHandler(async (req, res) => {
 
 // Update user profile
 router.put('/', validateProfile, asyncHandler(async (req, res) => {
-  const { first_name, last_name, phone, specialization, license_number, map_preferences } = req.body
+  const { first_name, last_name, full_name, email, profile_complete, first_login, map_preferences } = req.body
 
   const userClient = createUserClient(req.token)
 
+  // Only include fields that exist in the database schema
   const updateData = {
-    first_name: first_name || null,
-    last_name: last_name || null,
-    phone: phone || null,
-    specialization: specialization || null,
-    license_number: license_number || null,
     updated_at: new Date().toISOString()
   }
 
+  // Add fields only if they're provided (matching exact schema)
+  if (first_name !== undefined) updateData.first_name = first_name || null
+  if (last_name !== undefined) updateData.last_name = last_name || null
+  if (full_name !== undefined) updateData.full_name = full_name || null
+  if (email !== undefined) updateData.email = email || null
+  if (profile_complete !== undefined) updateData.profile_complete = profile_complete
+  if (first_login !== undefined) updateData.first_login = first_login
+  
   // Add map_preferences if provided
   if (map_preferences !== undefined) {
     updateData.map_preferences = map_preferences
@@ -213,7 +217,8 @@ router.get('/stats', asyncHandler(async (req, res) => {
 function calculateProfileCompleteness(profile) {
   if (!profile) return 0
 
-  const fields = ['first_name', 'last_name', 'phone', 'specialization', 'license_number']
+  // Use fields that exist in the actual database schema for profile completeness
+  const fields = ['first_name', 'last_name', 'full_name', 'email']
   const completedFields = fields.filter(field => profile[field] && profile[field].trim())
   
   return Math.round((completedFields.length / fields.length) * 100)

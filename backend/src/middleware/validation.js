@@ -78,26 +78,26 @@ export const validateProfile = [
   body('email')
     .optional()
     .isEmail()
-    .normalizeEmail()
     .withMessage('Must be a valid email address'),
   
-  body('phone')
+  body('full_name')
     .optional()
     .trim()
-    .matches(/^\+?[\d\s\-\(\)\.]+$/)
-    .withMessage('Phone number format is invalid'),
+    .isLength({ min: 1, max: 200 })
+    .withMessage('Full name must be between 1 and 200 characters'),
   
-  body('specialization')
+  body('profile_complete')
     .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Specialization must not exceed 100 characters'),
+    .custom((value) => {
+      // Allow boolean values or null/undefined
+      return value === null || value === undefined || typeof value === 'boolean';
+    })
+    .withMessage('Profile complete must be a boolean value or null'),
   
-  body('license_number')
+  body('first_login')
     .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('License number must not exceed 50 characters'),
+    .isBoolean()
+    .withMessage('First login must be a boolean value'),
 
   body('map_preferences')
     .optional()
