@@ -28,9 +28,9 @@ class ProfileManager {
       closeBtn.addEventListener('click', () => {
         this.closeProfile();
       });
-      console.log('✅ Profile close button handler attached');
+      console.log('profile.js - ✅ Profile close button handler attached');
     } else {
-      console.log('⚠️  Profile close button not found, will try again');
+      console.log('profile.js - ⚠️  Profile close button not found, will try again');
       // Try again after another delay
       setTimeout(() => this.setupCloseButton(), 1000);
     }
@@ -41,7 +41,7 @@ class ProfileManager {
       profileDeleteBtn.addEventListener('click', () => {
         this.deleteProfile();
       });
-      console.log('�️ Profile delete button handler attached');
+      console.log('profile.js - �️ Profile delete button handler attached');
     }
   }
 
@@ -73,7 +73,7 @@ class ProfileManager {
 
       return null;
     } catch (error) {
-      console.error('Error creating initial profile:', error);
+      console.error('profile.js - Error creating initial profile:', error);
       return null;
     }
   }
@@ -103,16 +103,16 @@ class ProfileManager {
 
   // Load profile data at startup
   async loadProfileData() {
-    console.log('📋 Loading profile data...');
+    console.log('profile.js - 📋 Loading profile data...');
     try {
       if (!window.auth || !window.auth.isAuthenticated()) {
-        console.log('⏳ Auth not ready, retrying in 1s...');
+        console.log('profile.js - ⏳ Auth not ready, retrying in 1s...');
         setTimeout(() => this.loadProfileData(), 1000);
         return;
       }
 
       if (!window.apiClient) {
-        console.log('⏳ API client not ready, retrying in 1s...');
+        console.log('profile.js - ⏳ API client not ready, retrying in 1s...');
         setTimeout(() => this.loadProfileData(), 1000);
         return;
       }
@@ -134,7 +134,7 @@ class ProfileManager {
           this.userProfile = await this.createInitialProfile(user);
         }
       } catch (profileError) {
-        console.error('Profile load error:', profileError);
+        console.error('profile.js - Profile load error:', profileError);
         this.userProfile = null;
       }
 
@@ -148,7 +148,7 @@ class ProfileManager {
           this.userContracts = [];
         }
       } catch (contractsError) {
-        console.error('Contracts load error:', contractsError);
+        console.error('profile.js - Contracts load error:', contractsError);
         this.userContracts = [];
       }
       
@@ -182,7 +182,7 @@ class ProfileManager {
     }
     
     // Hide loading, show data
-    console.log('✅ Displaying profile data');
+    console.log('profile.js - ✅ Displaying profile data');
     loadingDiv.style.display = 'none';
     profileDataDiv.style.display = 'block';
 
@@ -248,18 +248,18 @@ class ProfileManager {
     const slideout = document.getElementById('profile-slideout');
     
     if (!slideout) {
-      console.warn('⚠️ Profile slideout not found, components may not be loaded yet');
+      console.warn('profile.js - ⚠️ Profile slideout not found, components may not be loaded yet');
       return;
     }
     
     if (!this.isProfileOpen) {
       slideout.classList.add('open');
       this.isProfileOpen = true;
-      console.log('✅ Profile opened');
+      console.log('profile.js - ✅ Profile opened');
     } else {
       slideout.classList.remove('open');
       this.isProfileOpen = false;
-      console.log('✅ Profile closed');
+      console.log('profile.js - ✅ Profile closed');
     }
   }
 
@@ -269,7 +269,7 @@ class ProfileManager {
 
     const slideout = document.getElementById('profile-slideout');
     if (!slideout) {
-      console.warn('⚠️ Profile slideout not found during close');
+      console.warn('profile.js - ⚠️ Profile slideout not found during close');
       this.isProfileOpen = false;
       return;
     }
@@ -312,7 +312,7 @@ class ProfileManager {
       }
 
       // Use backend API to completely delete everything including auth account
-      console.log('🗑️ Calling backend complete deletion...');
+      console.log('profile.js - 🗑️ Calling backend complete deletion...');
       
       const result = await window.apiClient.deleteProfile();
       
@@ -320,7 +320,7 @@ class ProfileManager {
         throw new Error(result.error || 'Profile deletion failed');
       }
 
-      console.log('✅ Complete account deletion successful');
+      console.log('profile.js - ✅ Complete account deletion successful');
 
       // Clear local data and force logout
       sessionStorage.clear();
@@ -331,7 +331,7 @@ class ProfileManager {
       window.location.href = 'index.html';
 
     } catch (error) {
-      console.error('Profile delete error:', error);
+      console.error('profile.js - Profile delete error:', error);
       alert('Error during account deletion: ' + error.message + '\n\nPlease contact support if the problem persists.');
       
       // Re-enable button
@@ -466,7 +466,7 @@ class ProfileManager {
             email: value
           });
           if (emailError) {
-            console.error('Email update error:', emailError);
+            console.error('profile.js - Email update error:', emailError);
             this.showProfileError('Email update failed: ' + emailError.message);
           } else {
             this.showProfileSuccess('Email update initiated. Please check your new email for confirmation.');
@@ -477,10 +477,10 @@ class ProfileManager {
       // Note: Metadata sync is now handled by the backend API
       // No direct Supabase auth metadata updates needed from frontend
       if (Object.keys(metadataUpdate).length > 0) {
-        console.log(`✅ Profile field ${fieldId} will be synced by backend`);
+        console.log(`profile.js - ✅ Profile field ${fieldId} will be synced by backend`);
       }
     } catch (error) {
-      console.error('Auth metadata sync failed:', error);
+      console.error('profile.js - Auth metadata sync failed:', error);
     }
   }
 
@@ -590,7 +590,7 @@ class ProfileManager {
 
   // Load map preferences and set checkboxes
   loadMapPreferences() {
-    console.log('🗺️ Loading map preferences...', this.userProfile?.map_preferences);
+    console.log('profile.js - 🗺️ Loading map preferences...', this.userProfile?.map_preferences);
     
     // Default preferences (CONUS, AK, HI, PR, VI enabled by default)
     const defaultPrefs = {
@@ -614,10 +614,10 @@ class ProfileManager {
     let mapPrefs;
     if (this.userProfile && this.userProfile.map_preferences && typeof this.userProfile.map_preferences === 'object') {
       mapPrefs = this.userProfile.map_preferences;
-      console.log('✅ Using saved preferences:', mapPrefs);
+      console.log('profile.js - ✅ Using saved preferences:', mapPrefs);
     } else {
       mapPrefs = defaultPrefs;
-      console.log('⚠️ Using default preferences (no saved prefs found)');
+      console.log('profile.js - ⚠️ Using default preferences (no saved prefs found)');
     }
 
     // Store original preferences for change tracking
@@ -629,7 +629,7 @@ class ProfileManager {
       if (checkbox) {
         // Use saved preference if available, otherwise use default
         checkbox.checked = mapPrefs.hasOwnProperty(region) ? mapPrefs[region] : defaultPrefs[region];
-        console.log(`🔘 ${region}: ${checkbox.checked}`);
+        console.log(`profile.js - 🔘 ${region}: ${checkbox.checked}`);
       }
     });
 
@@ -660,11 +660,11 @@ class ProfileManager {
         checkbox.addEventListener('change', () => {
           // Mark that preferences have changed but don't auto-save
           this.hasUnsavedMapChanges = true;
-          console.log('📍 Map preference changed, will save when form is saved');
+          console.log('profile.js - 📍 Map preference changed, will save when form is saved');
           
           // Update map display immediately for live preview (but don't save to database)
           if (window.MapController && window.MapController.updateSmartBox) {
-            console.log('🔄 [PROFILE] Regional preference changed - updating map display (preview only)');
+            console.log('profile.js - 🔄 [PROFILE] Regional preference changed - updating map display (preview only)');
             window.MapController.updateSmartBox();
           }
         });
@@ -733,11 +733,11 @@ class ProfileManager {
   // Save only map preferences (called automatically when checkboxes change)
   async saveMapPreferencesOnly() {
     try {
-      console.log('📍 Auto-saving map preferences...');
+      console.log('profile.js - 📍 Auto-saving map preferences...');
 
       const user = window.auth.getCurrentUser();
       if (!user) {
-        console.log('❌ User not logged in, skipping map preferences save');
+        console.log('profile.js - ❌ User not logged in, skipping map preferences save');
         return;
       }
 
@@ -761,26 +761,26 @@ class ProfileManager {
         map_preferences: preferences
       };
 
-      console.log('📍 Saving map preferences:', preferences);
+      console.log('profile.js - 📍 Saving map preferences:', preferences);
       const result = await window.apiClient.updateProfile(profileData);
 
       if (result.success) {
-        console.log('✅ Map preferences saved successfully');
+        console.log('profile.js - ✅ Map preferences saved successfully');
         // Update the stored original preferences
         this.originalMapPreferences = { ...preferences };
         this.hasUnsavedMapChanges = false;
       } else {
-        console.error('❌ Failed to save map preferences:', result.error);
+        console.error('profile.js - ❌ Failed to save map preferences:', result.error);
       }
     } catch (error) {
-      console.error('❌ Error saving map preferences:', error);
+      console.error('profile.js - ❌ Error saving map preferences:', error);
     }
   }
 
   // Save complete profile including map preferences
   async saveCompleteProfile() {
     try {
-      console.log('💾 Saving complete profile...');
+      console.log('profile.js - 💾 Saving complete profile...');
 
       const user = window.auth.getCurrentUser();
       if (!user) {
@@ -834,10 +834,10 @@ class ProfileManager {
       profileData.profile_complete = Boolean(isComplete); // Ensure it's always a boolean
       profileData.first_login = false;
 
-      console.log('🔍 Sending profile data with all schema-matching fields');
+      console.log('profile.js - 🔍 Sending profile data with all schema-matching fields');
 
-      console.log('📍 Saving profile with map preferences:', mapPreferences);
-      console.log('📋 Complete profile data being saved:', profileData);
+      console.log('profile.js - 📍 Saving profile with map preferences:', mapPreferences);
+      console.log('profile.js - 📋 Complete profile data being saved:', profileData);
 
       // Save to backend
       const result = await window.apiClient.updateProfile(profileData);
@@ -853,7 +853,7 @@ class ProfileManager {
           this.hasUnsavedMapChanges = false;
         }
 
-        console.log('✅ Profile saved successfully');
+        console.log('profile.js - ✅ Profile saved successfully');
         this.showProfileSuccess('Profile saved successfully!');
         this.updateMapPreferencesStatus();
 
@@ -865,7 +865,7 @@ class ProfileManager {
 
         // Notify map to update its filtering if preferences changed
         if (profileData.map_preferences && window.MapController && window.MapController.updateSmartBox) {
-          console.log('🗺️ Triggering map update after successful preference save');
+          console.log('profile.js - 🗺️ Triggering map update after successful preference save');
           window.MapController.updateSmartBox();
         }
 
@@ -875,13 +875,13 @@ class ProfileManager {
         }, 1000); // Brief delay to show success message
 
       } else {
-        console.error('❌ Profile save failed:', result);
+        console.error('profile.js - ❌ Profile save failed:', result);
         throw new Error(result.error || result.message || 'Failed to save profile');
       }
 
     } catch (error) {
-      console.error('❌ Error saving profile:', error);
-      console.error('❌ Full error details:', error);
+      console.error('profile.js - ❌ Error saving profile:', error);
+      console.error('profile.js - ❌ Full error details:', error);
       this.showProfileError('Failed to save profile: ' + error.message);
     }
   }
@@ -922,7 +922,7 @@ class ProfileManager {
 
   // Cancel edit and discard changes
   cancelEdit() {
-    console.log('❌ Cancelling profile edit, discarding changes');
+    console.log('profile.js - ❌ Cancelling profile edit, discarding changes');
     
     // Reset any unsaved map preference changes
     if (this.originalMapPreferences) {
@@ -936,7 +936,7 @@ class ProfileManager {
       
       // Update map display to reflect reverted preferences
       if (window.MapController && window.MapController.updateSmartBox) {
-        console.log('🔄 [CANCEL] Reverting map display to saved preferences');
+        console.log('profile.js - 🔄 [CANCEL] Reverting map display to saved preferences');
         window.MapController.updateSmartBox();
       }
     }
@@ -977,7 +977,7 @@ class ProfileManager {
     // Disable form inputs and show display values
     this.setFormFieldsMode('display');
     
-    console.log('📋 Profile switched to display mode');
+    console.log('profile.js - 📋 Profile switched to display mode');
   }
 
   // Switch to edit mode
@@ -998,7 +998,7 @@ class ProfileManager {
     // Enable form inputs and hide display values
     this.setFormFieldsMode('edit');
     
-    console.log('✏️ Profile switched to edit mode');
+    console.log('profile.js - ✏️ Profile switched to edit mode');
   }
 
   // Set form fields to display or edit mode

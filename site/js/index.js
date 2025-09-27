@@ -64,7 +64,7 @@ async function checkExistingSession() {
                 window.location.href = 'logbook.html';
             }
         } catch (error) {
-            console.log('Session check error:', error);
+            console.log('index.js - Session check error:', error);
         }
     }
 }

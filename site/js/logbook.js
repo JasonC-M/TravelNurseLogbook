@@ -25,7 +25,7 @@ function sortContractsByName() {
     // Refresh map view to ensure all contracts are visible
     if (window.logbookApp && window.logbookApp.contracts && window.MapController) {
         setTimeout(() => {
-            console.log('📞 Refreshing map view after name sort');
+            console.log('logbook.js - 📞 Refreshing map view after name sort');
             window.MapController.fitToContracts(window.logbookApp.contracts, true);
         }, 100);
     }
@@ -51,7 +51,7 @@ function sortContractsByDate() {
     // Refresh map view to ensure all contracts are visible  
     if (window.logbookApp && window.logbookApp.contracts && window.MapController) {
         setTimeout(() => {
-            console.log('📞 Refreshing map view after date sort');
+            console.log('logbook.js - 📞 Refreshing map view after date sort');
             window.MapController.fitToContracts(window.logbookApp.contracts, true);
         }, 100);
     }
@@ -424,12 +424,12 @@ class LogbookApp {
           const lat = parseFloat(mapPin.dataset.lat);
           const lng = parseFloat(mapPin.dataset.lng);
           
-          console.log('📍 Map pin clicked:', { lat, lng });
+          console.log('logbook.js - 📍 Map pin clicked:', { lat, lng });
           
           if (window.MapController && !isNaN(lat) && !isNaN(lng)) {
             window.MapController.zoomToLocation(lat, lng);
           } else {
-            console.error('❌ Invalid coordinates or MapController not available', { lat, lng });
+            console.error('logbook.js - ❌ Invalid coordinates or MapController not available', { lat, lng });
           }
         }
       });
@@ -667,10 +667,10 @@ class LogbookApp {
 
       // Refresh contract markers on map
       if (window.refreshContractMarkers) {
-        console.log('📞 Calling refreshContractMarkers with', result.data.length, 'contracts');
+        console.log('logbook.js - 📞 Calling refreshContractMarkers with', result.data.length, 'contracts');
         window.refreshContractMarkers(result.data);
       } else {
-        console.log('❌ window.refreshContractMarkers not available');
+        console.log('logbook.js - ❌ window.refreshContractMarkers not available');
       }
 
 

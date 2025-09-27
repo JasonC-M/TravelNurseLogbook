@@ -30,7 +30,7 @@ class Auth {
             this.handleInitialRouting();
             
         } catch (error) {
-            console.error('Auth initialization error:', error);
+            console.error('auth.js - Auth initialization error:', error);
             // Clear potentially corrupted auth state
             this.apiClient.clearTokens();
             this.currentUser = null;
@@ -199,7 +199,7 @@ class Auth {
                 user: user
             };
         } catch (error) {
-            console.error('Error getting session:', error);
+            console.error('auth.js - Error getting session:', error);
             return null;
         }
     }
@@ -230,7 +230,7 @@ class Auth {
                     return true;
                 }
             } catch (error) {
-                console.error('Auth refresh error:', error);
+                console.error('auth.js - Auth refresh error:', error);
             }
         }
         return false;

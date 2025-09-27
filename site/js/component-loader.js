@@ -19,9 +19,9 @@ class ComponentLoader {
       }
       
       targetElement.insertAdjacentHTML('beforeend', html);
-      console.log(`✅ Loaded component: ${componentPath}`);
+      console.log(`component-loader.js - ✅ Loaded component: ${componentPath}`);
     } catch (error) {
-      console.error(`❌ Error loading component ${componentPath}:`, error);
+      console.error(`component-loader.js - ❌ Error loading component ${componentPath}:`, error);
     }
   }
   
@@ -32,9 +32,9 @@ class ComponentLoader {
     
     try {
       await Promise.all(loadPromises);
-      console.log('✅ All components loaded successfully');
+      console.log('component-loader.js - ✅ All components loaded successfully');
     } catch (error) {
-      console.error('❌ Error loading some components:', error);
+      console.error('component-loader.js - ❌ Error loading some components:', error);
     }
   }
 }

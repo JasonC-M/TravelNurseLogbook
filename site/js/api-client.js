@@ -120,7 +120,7 @@ class ApiClient {
             };
 
         } catch (error) {
-            console.error(`API Request failed: ${config.method} ${url}`, error);
+            console.error(`api-client.js - API Request failed: ${config.method} ${url}`, error);
             return {
                 success: false,
                 error: error.message || 'Network request failed',
@@ -313,7 +313,7 @@ class ApiClient {
                 metadata: payload.user_metadata || {}
             };
         } catch (error) {
-            console.error('Error decoding token:', error);
+            console.error('api-client.js - Error decoding token:', error);
             return null;
         }
     }

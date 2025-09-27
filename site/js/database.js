@@ -113,7 +113,7 @@ class Database {
             for (const contract of contracts) {
                 const deleteResult = await this.deleteContract(contract.id, userId);
                 if (!deleteResult.success) {
-                    console.error('Failed to delete contract:', contract.id, deleteResult.error);
+                    console.error('database.js - Failed to delete contract:', contract.id, deleteResult.error);
                 }
             }
 
@@ -145,7 +145,7 @@ class Database {
         try {
             // Document upload functionality would need to be implemented in the backend API
             // This is a placeholder for future implementation
-            console.warn('Document upload not yet implemented in backend API');
+            console.warn('database.js - Document upload not yet implemented in backend API');
             return { success: false, error: 'Document upload feature not yet available' };
         } catch (error) {
             return { success: false, error: error.message };
@@ -156,7 +156,7 @@ class Database {
         try {
             // Document management functionality would need to be implemented in the backend API
             // This is a placeholder for future implementation
-            console.warn('Document deletion not yet implemented in backend API');
+            console.warn('database.js - Document deletion not yet implemented in backend API');
             return { success: false, error: 'Document deletion feature not yet available' };
         } catch (error) {
             return { success: false, error: error.message };
@@ -167,7 +167,7 @@ class Database {
         try {
             // Document URL generation would need to be implemented in the backend API
             // This is a placeholder for future implementation
-            console.warn('Document URL generation not yet implemented in backend API');
+            console.warn('database.js - Document URL generation not yet implemented in backend API');
             return { success: false, error: 'Document URL feature not yet available' };
         } catch (error) {
             return { success: false, error: error.message };
