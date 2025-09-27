@@ -123,7 +123,26 @@ function calculateSmartMapBounds(contracts) {
             // Convert positive Pacific longitudes to negative equivalent
             if (lng > 0 && lng <= 180) {
                 lng = lng - 360; // e.g., Guam 144.8°E becomes -215.2°W
-                console.log(`🌏 Normalized Pacific coordinate: ${contract.hospital_name || 'Unknown'} ${lat}, ${lng + 360}°E → ${lat}, ${lng}°W`);
+                console.log(`🌏 Using ${filteredCoords.length} filtered contracts out of ${validCoords.length} total for map centering`);
+
+    // Check if user has any regions selected (not all false)
+    const hasAnyRegionsSelected = Object.values(userPrefs).some(pref => pref === true);
+    
+    // Determine coordinates to use based on smart zoom rules:
+    // 1. If no regions selected -> use CONUS default
+    // 2. If regions selected but no contracts in those regions -> use CONUS default  
+    // 3. If regions selected and contracts exist -> use filtered contracts
+    let coordsToUse;
+    if (!hasAnyRegionsSelected || filteredCoords.length === 0) {
+        console.log(`🎯 Smart zoom: ${!hasAnyRegionsSelected ? 'No regions selected' : 'No contracts in selected regions'} - defaulting to CONUS view`);
+        return {
+            center: [39.8283, -98.5795], // CONUS center
+            zoom: 4
+        };
+    } else {
+        coordsToUse = filteredCoords;
+        console.log(`🎯 Smart zoom: Using ${coordsToUse.length} contracts in selected regions`);
+    }
             }
             validCoords.push([lat, lng]);
         }
