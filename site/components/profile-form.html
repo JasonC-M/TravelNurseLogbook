@@ -174,7 +174,7 @@
         <strong>Warning:</strong> This action will permanently delete your entire account, 
         all profile data, contract history, and cannot be undone.
       </p>
-      <button id="profile-delete-btn" class="profile-delete-btn" type="button" style="margin: 0; padding: 10px 16px; background: #dc3545; color: white; border: 1px solid #dc3545; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer;" onclick="console.log('ProfileManager exists:', !!window.profileManager); console.log('DeleteProfile exists:', !!window.profileManager?.deleteProfile); if(window.profileManager && window.profileManager.deleteProfile) { window.profileManager.deleteProfile(); } else { alert('ProfileManager or deleteProfile not found!'); }">
+      <button id="profile-delete-btn" class="profile-delete-btn" type="button" style="margin: 0; padding: 10px 16px; background: #dc3545; color: white; border: 1px solid #dc3545; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer;">
         🗑️ DELETE EVERYTHING
       </button>
     </div>
