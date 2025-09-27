@@ -131,16 +131,38 @@ function addContractToMap(contract) {
     // Correct West Pacific longitude for proper display
     lng = correctLongitudeForDisplay(lng, true); // Log corrections during marker creation
 
-    // Create marker
+    // Extract city and state from address if not available as separate fields
+    const extractCityState = (address) => {
+        if (!address) return { city: 'Unknown', state: 'Unknown' };
+        
+        // Parse address like "1800 Orleans St, Baltimore, MD 21287"
+        const parts = address.split(',').map(p => p.trim());
+        if (parts.length >= 3) {
+            const city = parts[parts.length - 2];
+            const stateZip = parts[parts.length - 1].split(' ');
+            const state = stateZip[0];
+            return { city, state };
+        } else if (parts.length === 2) {
+            // Handle addresses like "Pago Pago, AS 96799"
+            const city = parts[0];
+            const stateZip = parts[1].split(' ');
+            const state = stateZip[0];
+            return { city, state };
+        }
+        return { city: 'Unknown', state: 'Unknown' };
+    };
+
+    const location = extractCityState(contract.address);
+    const city = contract.city || location.city;
+    const state = contract.state || location.state;
+
+    // Create marker with tight tooltip format matching card format
     const marker = L.marker([lat, lng], { icon: createCustomMapIcon() })
         .addTo(contractMap)
         .bindPopup(`
-            <div class="contract-popup">
-                <h4>${contract.facility}</h4>
-                <p><strong>Location:</strong> ${contract.city}, ${contract.state}</p>
-                <p><strong>Dates:</strong> ${contract.start_date} → ${contract.end_date}</p>
-                <p><strong>Specialty:</strong> ${contract.specialty}</p>
-            </div>
+            <strong>${contract.hospital_name || 'Unknown Hospital'}</strong><br>
+            ${contract.address || 'Address not provided'}<br>
+            ${contract.start_date || 'N/A'} → ${contract.end_date || 'Ongoing'}
         `);
 
     // Create 50-mile radius circle
@@ -308,8 +330,8 @@ function fitMapToSmartBox(smartBox, animate = true) {
     
     // Add padding by reducing zoom level for two reasons:
     // 1. Ensure contracts inside the buffered box are visible (0.3 zoom reduction)
-    // 2. Add small buffer between box edges and panel edges (additional 0.1 zoom reduction)
-    const finalZoom = Math.max(2, calculatedZoom - 0.4);
+    // 2. Add visible buffer between box edges and panel edges (additional 0.3 zoom reduction)
+    const finalZoom = Math.max(2, calculatedZoom - 0.6);
     
     console.log('🔍 [ZOOM] Box-to-screen calculation:', {
         mapSize: `${mapWidthPx}×${mapHeightPx}px`,
@@ -318,7 +340,7 @@ function fitMapToSmartBox(smartBox, animate = true) {
         requiredDPP: requiredDegreesPerPixel.toFixed(6),
         calculatedZoom: calculatedZoom.toFixed(2),
         finalZoom: finalZoom.toFixed(2),
-        strategy: 'Zoom with padding: contracts visible + box-to-panel buffer'
+        strategy: 'Zoom with increased padding for visible box-to-panel buffer'
     });
     
     // Set view to center of box with calculated zoom
@@ -417,7 +439,7 @@ function filterContractsByPreferences(contracts) {
         const region = getContractRegion(contract);
         const isIncluded = preferences[region] === true;
         
-        console.log(`📍 Contract ${contract.facility}: region=${region}, included=${isIncluded}`);
+        console.log(`📍 Contract ${contract.hospital_name}: region=${region}, included=${isIncluded}`);
         return isIncluded;
     });
     
@@ -447,7 +469,7 @@ function calculateSmartBox(contracts) {
                 lat, 
                 lng, 
                 originalLng,
-                facility: contract.facility,
+                facility: contract.hospital_name,
                 city: contract.city,
                 state: contract.state
             });
