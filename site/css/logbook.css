@@ -24,6 +24,10 @@ a, .profile-button, .add-contract-button, .map-pin, .sorting-buttons button {
 }
 
 /* Reset default margins and padding */
+html {
+    scroll-behavior: smooth;
+}
+
 html, body {
     margin: 0;
     padding: 0;
@@ -306,6 +310,9 @@ html, body {
     background: white;
     z-index: 1000;
     overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
     display: none;
 }
 
@@ -323,6 +330,9 @@ html, body {
     background: white;
     z-index: 1000;
     overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
     display: none;
 }
 
@@ -358,6 +368,8 @@ html, body {
 
 .profile-content {
     padding: 15px;
+    min-height: 100%;
+    box-sizing: border-box;
 }
 
 .profile-section {
