@@ -10,6 +10,12 @@ class ProfileManager {
     this.isInitialized = false;
     this.contractStats = { total: 0, active: 0, completed: 0 };
     this.currentMode = 'display'; // 'display' or 'edit'
+    
+    // Cached preferences - loaded once at startup
+    this.cachedPreferences = {
+      mapRegions: [],
+      loaded: false
+    };
   }
 
   // Initialize event handlers for profile form
@@ -24,13 +30,17 @@ class ProfileManager {
   // Setup close button event handler
   setupCloseButton() {
     const closeBtn = document.getElementById('close-profile');
+    console.log('profile.js - 🔧 Setting up header close button, found:', !!closeBtn);
+    
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
+        console.log('profile.js - 🔄 Header close button clicked');
+        this.logPreferenceState('HEADER CLOSE BUTTON CLICKED');
         this.closeProfile();
       });
-      console.log('profile.js - ✅ Profile close button handler attached');
+      console.log('profile.js - ✅ Profile header close button handler attached');
     } else {
-      console.log('profile.js - ⚠️  Profile close button not found, will try again');
+      console.log('profile.js - ⚠️ Profile header close button not found, will try again');
       // Try again after another delay
       setTimeout(() => this.setupCloseButton(), 1000);
     }
@@ -101,6 +111,56 @@ class ProfileManager {
     this.showProfileSuccess('Welcome! Please complete your profile to get started.');
   }
 
+  // Load only user preferences (lightweight startup method)
+  async loadPreferencesOnly() {
+    console.log('profile.js - 🎯 Loading user preferences only...');
+    try {
+      if (!window.auth || !window.auth.isAuthenticated()) {
+        console.log('profile.js - ⏳ Auth not ready for preferences load');
+        return false;
+      }
+
+      if (!window.apiClient) {
+        console.log('profile.js - ⏳ API client not ready for preferences load');
+        return false;
+      }
+
+      const user = window.auth.getCurrentUser();
+      if (!user) {
+        console.log('profile.js - ❌ No user for preferences load');
+        return false;
+      }
+
+      // Load minimal profile data (just preferences)
+      try {
+        const result = await window.apiClient.getProfile();
+        
+        if (result.success && result.data.profile) {
+          this.userProfile = result.data.profile;
+          // Load preferences into cache
+          this.loadMapRegionsToCache();
+          console.log('profile.js - ✅ Preferences loaded and cached');
+          return true;
+        } else {
+          // No profile exists, use defaults
+          console.log('profile.js - 📋 No saved profile, using default preferences');
+          this.cachedPreferences.mapRegions = ['conus', 'alaska']; // Default regions
+          this.cachedPreferences.loaded = true;
+          return true;
+        }
+      } catch (error) {
+        console.error('profile.js - Preferences load error:', error);
+        // Use defaults on error
+        this.cachedPreferences.mapRegions = ['conus', 'alaska'];
+        this.cachedPreferences.loaded = true;
+        return true;
+      }
+    } catch (error) {
+      console.error('profile.js - Preferences load failed:', error);
+      return false;
+    }
+  }
+
   // Load profile data at startup
   async loadProfileData() {
     console.log('profile.js - 📋 Loading profile data...');
@@ -138,18 +198,24 @@ class ProfileManager {
         this.userProfile = null;
       }
 
-      // Load contracts data
-      try {
-        const result = await window.apiClient.getContracts();
-        
-        if (result.success) {
-          this.userContracts = result.data.contracts || [];
-        } else {
+      // Load contracts data (only if not already loaded by logbook.js)
+      if (!window.logbookApp || !window.logbookApp.contracts || window.logbookApp.contracts.length === 0) {
+        try {
+          console.log('profile.js - 📋 Loading contracts (logbook.js hasn\'t loaded them yet)');
+          const result = await window.apiClient.getContracts();
+          
+          if (result.success) {
+            this.userContracts = result.data.contracts || [];
+          } else {
+            this.userContracts = [];
+          }
+        } catch (contractsError) {
+          console.error('profile.js - Contracts load error:', contractsError);
           this.userContracts = [];
         }
-      } catch (contractsError) {
-        console.error('profile.js - Contracts load error:', contractsError);
-        this.userContracts = [];
+      } else {
+        console.log('profile.js - 📋 Using contracts already loaded by logbook.js');
+        this.userContracts = window.logbookApp.contracts;
       }
       
       // Update profile UI
@@ -222,7 +288,7 @@ class ProfileManager {
       if (fullNameDisplay) fullNameDisplay.textContent = fullName || '(Not set)';
     }
 
-    // Map preferences (only load if not already loaded)
+    // Map preferences (load to UI if not already loaded)
     if (!this.mapPreferencesLoaded) {
       this.loadMapPreferences();
       this.mapPreferencesLoaded = true;
@@ -275,6 +341,10 @@ class ProfileManager {
     }
     slideout.classList.remove('open');
     this.isProfileOpen = false;
+    
+    // Trigger Smart View update in case preferences changed
+    console.log('profile.js - 🚪 Profile form closed, updating Smart View');
+    this.updateCachedMapRegions();
   }
 
   // Close all forms (profile and contract forms)
@@ -656,38 +726,93 @@ class ProfileManager {
 
   // Get currently enabled map regions (for Smart View filtering)
   getMapRegions() {
+    // If preferences are already cached, return them immediately
+    if (this.cachedPreferences.loaded) {
+      return this.cachedPreferences.mapRegions;
+    }
+    
+    // Load preferences for the first time
+    this.loadMapRegionsToCache();
+    return this.cachedPreferences.mapRegions;
+  }
+  
+  // Load map regions to cache (called once at startup)
+  loadMapRegionsToCache() {
     const enabledRegions = [];
     
-    // Default preferences - same order as loadMapPreferences
-    const allRegions = [
-      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
-      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
-      'caribbean', 'europe', 'asia-pacific', 'other-international'
-    ];
+    console.log('profile.js - 🎯 Loading preferences to cache...');
     
-    // First try: Check if checkboxes are available and use them
-    let foundCheckboxes = false;
-    allRegions.forEach(region => {
-      const checkbox = document.getElementById(`map_region_${region}`);
-      if (checkbox) {
-        foundCheckboxes = true;
-        if (checkbox.checked) {
-          enabledRegions.push(region);
-        }
-      }
-    });
-    
-    // If no checkboxes found (profile form not loaded yet), fall back to saved profile data
-    if (!foundCheckboxes && this.userProfile && this.userProfile.map_preferences) {
-      console.log('profile.js - 🔄 Checkboxes not available, using saved profile data for Smart View');
+    // Always use saved profile data for consistency (checkboxes might not be loaded yet)
+    if (this.userProfile && this.userProfile.map_preferences) {
+      console.log('profile.js - � Using saved profile data for cache:', this.userProfile.map_preferences);
       Object.keys(this.userProfile.map_preferences).forEach(region => {
         if (this.userProfile.map_preferences[region] === true) {
           enabledRegions.push(region);
         }
       });
+    } else {
+      // Default preferences if no saved profile
+      console.log('profile.js - 📋 No saved preferences, using defaults for cache');
+      enabledRegions.push('conus', 'alaska');
     }
     
-    return enabledRegions;
+    // Cache the results
+    this.cachedPreferences.mapRegions = enabledRegions;
+    this.cachedPreferences.loaded = true;
+    
+    console.log('profile.js - 🎯 Cached map regions:', enabledRegions);
+  }
+  
+  // Log current preference state for debugging
+  logPreferenceState(context) {
+    console.log(`🔍 === PREFERENCE STATE DEBUG (${context}) ===`);
+    
+    // Cached preferences
+    console.log('📋 Cached preferences loaded:', this.cachedPreferences.loaded);
+    console.log('📋 Cached map regions:', this.cachedPreferences.mapRegions);
+    
+    // Saved profile preferences
+    if (this.userProfile && this.userProfile.map_preferences) {
+      const savedEnabled = Object.keys(this.userProfile.map_preferences)
+        .filter(key => this.userProfile.map_preferences[key] === true);
+      console.log('💾 Saved profile regions:', savedEnabled);
+    } else {
+      console.log('💾 No saved profile preferences found');
+    }
+    
+    // Current checkbox states
+    const currentEnabled = [];
+    const allRegions = ['conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands', 'guam', 'american-samoa', 'northern-mariana'];
+    allRegions.forEach(region => {
+      const checkbox = document.getElementById(`pref-${region}`);
+      if (checkbox && checkbox.checked) {
+        currentEnabled.push(region);
+      }
+    });
+    console.log('☑️ Current checkbox regions:', currentEnabled);
+    
+    // What getMapRegions() returns
+    const mapRegionsResult = this.getMapRegions();
+    console.log('🎯 getMapRegions() returns:', mapRegionsResult);
+    
+    console.log('🔍 === END PREFERENCE STATE DEBUG ===');
+  }
+
+  // Update cached preferences when user changes settings
+  updateCachedMapRegions() {
+    this.logPreferenceState('BEFORE updateCachedMapRegions');
+    
+    console.log('profile.js - 🔄 Updating cached map preferences...');
+    this.cachedPreferences.loaded = false; // Force reload
+    this.loadMapRegionsToCache();
+    
+    this.logPreferenceState('AFTER updateCachedMapRegions');
+    
+    // Notify map to update with new preferences
+    if (window.MapController && window.MapController.updateSmartView) {
+      console.log('profile.js - 🗺️ Triggering map Smart View update');
+      window.MapController.updateSmartView();
+    }
   }
 
   // Setup event handlers for map preference controls
@@ -711,11 +836,8 @@ class ProfileManager {
           this.hasUnsavedMapChanges = true;
           console.log('profile.js - 📍 Map preference changed, will save when form is saved');
           
-          // Update map display immediately for live preview (but don't save to database)
-          if (window.MapController && window.MapController.updateSmartView) {
-            console.log('profile.js - 🔄 [PROFILE] Regional preference changed - updating map smart view (preview only)');
-            window.MapController.updateSmartView();
-          }
+          // Update cached preferences immediately for live preview
+          this.updateCachedMapRegions();
         });
       }
     });
@@ -818,6 +940,16 @@ class ProfileManager {
         // Update the stored original preferences
         this.originalMapPreferences = { ...preferences };
         this.hasUnsavedMapChanges = false;
+        
+        // Update userProfile with new preferences
+        if (!this.userProfile) {
+          this.userProfile = {};
+        }
+        this.userProfile.map_preferences = preferences;
+        
+        // Update cached preferences and trigger Smart View
+        console.log('profile.js - � Map preferences saved, updating cached preferences and Smart View');
+        this.updateCachedMapRegions();
       } else {
         console.error('profile.js - ❌ Failed to save map preferences:', result.error);
       }
@@ -912,16 +1044,24 @@ class ProfileManager {
           window.logbookApp.updateProfileButtonText(profileBtn);
         }
 
-        // Notify map to update its smart view if preferences changed
-        if (profileData.map_preferences && window.MapController && window.MapController.updateSmartView) {
-          console.log('profile.js - 🗺️ Triggering map smart view update after successful preference save');
-          window.MapController.updateSmartView();
+        // Update cached preferences and trigger Smart View if preferences changed
+        if (profileData.map_preferences) {
+          console.log('profile.js - � Updating cached preferences after successful save');
+          this.logPreferenceState('BEFORE CACHE UPDATE AFTER SAVE');
+          this.updateCachedMapRegions();
         }
 
         // Switch back to display mode after successful save
         setTimeout(() => {
           this.switchToDisplayMode();
         }, 1000); // Brief delay to show success message
+        
+        // Auto-close the profile form after successful save
+        setTimeout(() => {
+          console.log('profile.js - 🚪 Auto-closing profile form after successful save');
+          this.logPreferenceState('AUTO-CLOSE AFTER SAVE');
+          this.closeProfile();
+        }, 2000); // Close after showing success message
 
       } else {
         console.error('profile.js - ❌ Profile save failed:', result);
@@ -949,12 +1089,23 @@ class ProfileManager {
     const saveBtn = document.getElementById('save-profile-btn');
     const cancelEditBtn = document.getElementById('cancel-profile-edit-btn');
 
+    console.log('profile.js - 🔧 Setting up profile buttons...');
+    console.log('profile.js - 🔧 editBtn found:', !!editBtn);
+    console.log('profile.js - 🔧 closeDisplayBtn found:', !!closeDisplayBtn);
+    console.log('profile.js - 🔧 saveBtn found:', !!saveBtn);
+    console.log('profile.js - 🔧 cancelEditBtn found:', !!cancelEditBtn);
+
     if (editBtn) {
       editBtn.addEventListener('click', () => this.switchToEditMode());
     }
 
     if (closeDisplayBtn) {
-      closeDisplayBtn.addEventListener('click', () => this.closeProfile());
+      closeDisplayBtn.addEventListener('click', () => {
+        console.log('profile.js - 🔄 Display close button clicked');
+        this.closeProfile();
+      });
+    } else {
+      console.log('profile.js - ⚠️ Display close button (close-profile-display-btn) not found!');
     }
 
     if (saveBtn) {
