@@ -863,9 +863,9 @@ class ProfileManager {
       statusEl.innerHTML = '';
     }
 
-    // Keep button styling simple like contract form
+    // Keep button styling simple like contract form - using location-based class
     if (profileSaveBtn) {
-      profileSaveBtn.className = 'btn btn--secondary btn--compact';
+      profileSaveBtn.className = 'slideout-header-grey-compact';
       profileSaveBtn.style.minWidth = '200px';
       profileSaveBtn.style.fontSize = '16px';
       profileSaveBtn.style.padding = '12px 30px';

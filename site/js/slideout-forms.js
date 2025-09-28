@@ -12,7 +12,8 @@ class SlideoutFormManager {
     // Configuration options
     this.options = {
       closeButtonSelector: options.closeButtonSelector || '.close-btn',
-      cancelButtonSelectors: options.cancelButtonSelectors || ['.secondary-btn'],
+      // Support both legacy and new location-based button classes
+      cancelButtonSelectors: options.cancelButtonSelectors || ['.secondary-btn', '.slideout-header-grey-compact'],
       onClose: options.onClose || null,
       onSave: options.onSave || null,
       enableRetry: options.enableRetry !== false, // Default true
