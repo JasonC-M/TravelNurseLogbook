@@ -122,7 +122,6 @@ export const validateProfile = [
 export const validateLogin = [
   body('email')
     .isEmail()
-    .normalizeEmail()
     .withMessage('Must be a valid email address'),
   
   body('password')
@@ -135,7 +134,6 @@ export const validateLogin = [
 export const validateRegister = [
   body('email')
     .isEmail()
-    .normalizeEmail()
     .withMessage('Must be a valid email address'),
   
   body('password')

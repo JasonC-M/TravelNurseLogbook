@@ -1,5 +1,5 @@
 import express from 'express'
-import { supabase, createUserClient } from '../config/supabase.js'
+import { supabase, supabaseAdmin, createUserClient } from '../config/supabase.js'
 import { asyncHandler } from '../middleware/errorHandler.js'
 import { validateProfile } from '../middleware/validation.js'
 import { requireAuth } from '../middleware/auth.js'
@@ -154,22 +154,57 @@ router.put('/', validateProfile, asyncHandler(async (req, res) => {
   })
 }))
 
-// Delete user profile (soft delete - keeps auth user)
+// Complete user account deletion - removes ALL data including auth account
 router.delete('/', asyncHandler(async (req, res) => {
   const userClient = createUserClient(req.token)
 
-  const { error } = await userClient
-    .from('user_profiles')
-    .delete()
-    .eq('user_id', req.user.id)
+  console.log(`🗑️ Starting complete account deletion for user: ${req.user.id}`)
 
-  if (error) {
-    throw new Error(`Failed to delete profile: ${error.message}`)
+  try {
+    // 1. Delete all user contracts
+    console.log('🗑️ Deleting user contracts...')
+    const { error: contractsError } = await userClient
+      .from('contracts')
+      .delete()
+      .eq('user_id', req.user.id)
+
+    if (contractsError) {
+      console.error('Error deleting contracts:', contractsError)
+      throw new Error(`Failed to delete contracts: ${contractsError.message}`)
+    }
+
+    // 2. Delete user profile
+    console.log('🗑️ Deleting user profile...')
+    const { error: profileError } = await userClient
+      .from('user_profiles')
+      .delete()
+      .eq('user_id', req.user.id)
+
+    if (profileError) {
+      console.error('Error deleting profile:', profileError)
+      throw new Error(`Failed to delete profile: ${profileError.message}`)
+    }
+
+    // 3. Delete the Supabase auth user (this removes login capability)
+    console.log('🗑️ Deleting Supabase auth account...')
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(req.user.id)
+
+    if (authError) {
+      console.error('Error deleting auth user:', authError)
+      throw new Error(`Failed to delete authentication account: ${authError.message}`)
+    }
+
+    console.log(`✅ Complete account deletion successful for user: ${req.user.id}`)
+    
+    res.json({
+      success: true,
+      message: 'Account completely deleted. All profile data, contracts, and authentication account have been permanently removed.'
+    })
+
+  } catch (error) {
+    console.error('🚨 Account deletion failed:', error)
+    throw new Error(`Account deletion failed: ${error.message}`)
   }
-
-  res.json({
-    message: 'Profile deleted successfully. Authentication account remains active.'
-  })
 }))
 
 // Get profile statistics
