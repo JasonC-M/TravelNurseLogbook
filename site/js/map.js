@@ -1299,7 +1299,6 @@ function refreshContractMarkers(contracts) {
                 fitMapToAllContracts(contracts);
             }, 100);
         }
-        }, 100);
     } else {
         // No contracts - show default CONUS view
         if (contractMap) {
