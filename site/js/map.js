@@ -39,76 +39,7 @@ window.fitCONUS = function() {
     }
 };
 
-/**
- * Complete contract zoom testing chart for all 20 sample contracts
- * Run in browser console: testAllContractZooms()
- */
-window.testAllContractZooms = function() {
-    console.log("🏥 COMPLETE CONTRACT ZOOM TESTING CHART");
-    console.log("📊 All 20 Sample Contracts with Current vs Desired Zoom Levels");
-    console.log("━".repeat(85));
-    
-    const allContracts = [
-        // Current/Recent Contracts  
-        { id: 1, name: "Seattle Children's Hospital", lat: 47.6625, region: "Northern tier", current: 9.0, desired: 9.0 }, // ✅ PERFECT
-        { id: 2, name: "Kuakini Medical Center (Honolulu)", lat: 21.3099, region: "Tropical", current: 9.6, desired: 9.6 }, // ✅ PERFECT
-        { id: 3, name: "Providence Alaska Medical Center", lat: 61.1928, region: "Arctic", current: 8.6, desired: 8.6 }, // ✅ TESTED
-        { id: 4, name: "Guam Regional Medical City", lat: 13.5139, region: "Tropical", current: 9.6, desired: 9.6 }, // ✅ FIXED PACIFIC
-        { id: 5, name: "Samuel Simmonds Memorial (Utqiagvik)", lat: 71.2906, region: "Extreme Arctic", current: 8.1, desired: 8.1 }, // ✅ PERFECT
-        
-        // Past Contracts
-        { id: 6, name: "Mayo Clinic Hospital (Phoenix)", lat: 33.6159, region: "Southern", current: 9.4, desired: 9.4 }, // ✅ TESTED
-        { id: 7, name: "LBJ Tropical Medical (American Samoa)", lat: -14.2781, region: "Tropical", current: 9.6, desired: 9.6 }, // ✅ TESTED
-        { id: 8, name: "Queen's Medical Center (Honolulu)", lat: 21.3099, region: "Tropical", current: 9.6, desired: 9.6 }, // ✅ TESTED
-        { id: 9, name: "Central Peninsula Hospital (Soldotna)", lat: 60.4878, region: "Arctic", current: 8.6, desired: 8.6 }, // ✅ TESTED
-        { id: 10, name: "Roy J. Carver Pavilion (Iowa City)", lat: 41.6581, region: "Most CONUS", current: 9.3, desired: 9.3 }, // ✅ TESTED
-        
-        { id: 11, name: "Schneider Regional (St Thomas, VI)", lat: 18.3358, region: "Tropical", current: 9.6, desired: 9.6 }, // ✅ TESTED
-        { id: 12, name: "Bartlett Regional Hospital (Juneau)", lat: 58.2539, region: "Northern tier", current: 9.0, desired: 8.8 }, // ⚠️ CLOSE
-        { id: 13, name: "Tampa General Hospital", lat: 27.9447, region: "Southern", current: 9.4, desired: 9.6 }, // ⚠️ CLOSE
-        { id: 14, name: "Banner University Medical (Tucson)", lat: 32.2431, region: "Southern", current: 9.4, desired: 9.3 }, // ⚠️ CLOSE
-        { id: 15, name: "Fairbanks Memorial Hospital", lat: 64.8378, region: "Arctic", current: 8.6, desired: 8.4 }, // ⚠️ CLOSE
-        
-        { id: 16, name: "Johns Hopkins Hospital (Baltimore)", lat: 39.2970, region: "Most CONUS", current: 9.3, desired: 9.3 }, // ✅ PERFECT
-        { id: 17, name: "Commonwealth Health (Saipan)", lat: 15.1979, region: "Tropical", current: 9.6, desired: 9.6 }, // ✅ FIXED PACIFIC
-        { id: 18, name: "Mount Sinai Hospital (NYC)", lat: 40.7831, region: "Most CONUS", current: 9.3, desired: 9.3 }, // ✅ PERFECT
-        { id: 19, name: "Mat-Su Regional Medical (Palmer)", lat: 61.5844, region: "Arctic", current: 8.6, desired: 8.6 }, // ✅ TESTED
-        { id: 20, name: "Massachusetts General Hospital", lat: 42.3631, region: "Most CONUS", current: 9.3, desired: 9.3 } // ✅ PERFECT
-    ];
-    
-    console.log("ID | Hospital Name                          | Lat°   | Region       | Current | Desired");
-    console.log("---|---------------------------------------|--------|--------------|---------|--------");
-    
-    allContracts.forEach(contract => {
-        const actualZoom = calculateCircleZoomLevel(contract.lat, 0); // longitude doesn't matter for regions
-        const status = contract.desired !== "TBD" ? "✅" : "⏳";
-        console.log(
-            `${contract.id.toString().padStart(2)} | ${contract.name.padEnd(37)} | ${contract.lat.toString().padStart(6)} | ${contract.region.padEnd(12)} | ${actualZoom.toString().padStart(7)} | ${contract.desired.toString().padStart(7)} ${status}`
-        );
-    });
-    
-    console.log("━".repeat(85));
-    console.log("✅ = Tested and confirmed perfect  |  ⏳ = Awaiting test results");
-    console.log("📍 Click each contract's map button and note the desired zoom level!");
-};
 
-/**
- * Quick regional zoom reference
- * Run in browser console: showZoomRegions()
- */
-window.showZoomRegions = function() {
-    console.log("🗺️ FINAL REGIONAL ZOOM BLOCKS (User-Tested):");
-    console.log("━".repeat(58));
-    console.log("Extreme Arctic (70°+):  Zoom 8.1 → Utqiagvik/Barrow area");
-    console.log("Arctic (60-70°):        Zoom 8.6 → Most of Alaska");
-    console.log("Northern tier (45-60°): Zoom 9.0 → MT, ND, WA, MN, SE Alaska");
-    console.log("Most of CONUS (35-45°): Zoom 9.3 → Majority of continental US");
-    console.log("Southern states (25-35°): Zoom 9.4 → FL, TX, CA, AZ");
-    console.log("Tropical (<25°):        Zoom 9.6 → HI, Guam, PR, USVI, AS");
-    console.log("━".repeat(58));
-    console.log("🔧 FIXES: Pacific coordinates + extreme Arctic perfected!");
-    console.log("✅ ALL 20 contracts now have optimal zoom levels");
-};
 
 /**
  * Force map to show optimal CONUS view using fitBounds
@@ -152,7 +83,7 @@ function fitMapToAllContracts(contracts) {
     });
     
     if (hasValidCoordinates) {
-        console.log(`🎯 Fitting map to ${contracts.length} contracts`);
+
         contractMap.fitBounds(bounds, {
             padding: [20, 20], // More padding for contract groups
             animate: true,     // Smooth animation for user-initiated actions
@@ -175,8 +106,7 @@ function logMapDimensions() {
         const center = contractMap.getCenter();
         const bounds = contractMap.getBounds();
         
-        console.log(`🗺️ Map: ${mapRect.width}x${mapRect.height} container, ${leafletSize.x}x${leafletSize.y} leaflet`);
-        console.log(`🎯 Center: ${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}, Maine visible: ${bounds.getEast() >= -67.0 ? '✅' : '❌'}`);
+
     }
 }
 
@@ -339,7 +269,7 @@ function calculateCircleZoomLevel(latitude, longitude) {
         region = "Tropical (HI, Guam, PR, USVI)";
     }
     
-    console.log(`🗺️ Regional zoom for lat ${latitude.toFixed(2)}°: ${region} → zoom ${zoom}`);
+
     
     return zoom;
 }
@@ -507,8 +437,6 @@ function initializeMapPins() {
  * STEP 1: Just creates a blank map centered on CONUS with layer controls
  */
 async function initializeMap() {
-    console.log('map.js - 🗺️ [STEP 1] Initializing basic map...');
-    
     // Check if Leaflet is available
     if (typeof L === 'undefined') {
         console.error('map.js - ❌ Leaflet (L) is not available! Check if Leaflet CSS/JS are loaded.');
@@ -522,8 +450,6 @@ async function initializeMap() {
         return false;
     }
     
-    console.log('map.js - ✅ Leaflet available, map container found');
-    
     try {
         // Create map with fractional zoom enabled for precise control
         contractMap = L.map('map', {
@@ -532,14 +458,11 @@ async function initializeMap() {
         });
         
         // Use fitBounds instead of setView - Leaflet automatically calculates optimal center and zoom!
-        console.log('🗺️ Using fitBounds to CONUS for automatic optimal centering and zoom');
         contractMap.fitBounds(CONUS_BOUNDS, {
             padding: [10, 10], // Small padding
             animate: false,
             maxZoom: 6.0
         });
-        
-        console.log('map.js - ✅ Leaflet map object created successfully');
         
         // Initialize marker arrays (from reference)
         contractMarkers = [];
@@ -562,14 +485,12 @@ async function initializeMap() {
     try {
         // Add default layer and layer control
         defaultLayer.addTo(contractMap);
-        console.log('map.js - ✅ Default tile layer added');
         
         const baseMaps = {
             Default: defaultLayer,
             Satellite: satelliteLayer
         };
         L.control.layers(baseMaps).addTo(contractMap);
-        console.log('map.js - ✅ Layer controls added');
         
         // Add zoom level debug label on top left
         addZoomLevelLabel();
@@ -577,9 +498,6 @@ async function initializeMap() {
         // Add resize handling for when contracts load and change panel size
         setupMapResizeHandling();
         
-
-        
-        console.log('map.js - ✅ [STEP 1] Basic map initialized successfully - map should be visible!');
         return true;
     } catch (error) {
         console.error('map.js - ❌ Error adding layers to map:', error);
@@ -591,8 +509,6 @@ async function initializeMap() {
  * Add a zoom level debug label on the top left of the map
  */
 function addZoomLevelLabel() {
-    console.log('map.js - 🏷️ Adding zoom level debug label...');
-    
     // Create zoom level control
     const zoomLevelControl = L.control({position: 'topleft'});
     
@@ -616,14 +532,12 @@ function addZoomLevelLabel() {
         map.on('zoomend', function() {
             const newZoom = map.getZoom();
             div.innerHTML = `Zoom: ${newZoom.toFixed(1)}`;
-            console.log(`map.js - 🔍 Zoom changed to: ${newZoom.toFixed(1)}`);
         });
         
         return div;
     };
     
     zoomLevelControl.addTo(contractMap);
-    console.log('map.js - ✅ Zoom level label added to top left');
 }
 
 /**
@@ -631,8 +545,6 @@ function addZoomLevelLabel() {
  * This fixes the issue where map shifts when left panel loads with contracts
  */
 function setupMapResizeHandling() {
-    console.log('map.js - 📐 [STEP 1] Setting up resize handling...');
-    
     // Get the map container
     const mapContainer = document.getElementById('map');
     if (!mapContainer) {
@@ -664,7 +576,6 @@ function setupMapResizeHandling() {
             
             if (sizeChanged && contractMap) {
                 resizeTimeout = setTimeout(() => {
-                    console.log(`map.js - 📐 Map container resized to ${newSize.width}x${newSize.height}`);
                     contractMap.invalidateSize();
                     forceConsistentView();
                     lastMapSize = newSize;
@@ -673,7 +584,6 @@ function setupMapResizeHandling() {
         });
         
         mapResizeObserver.observe(mapContainer);
-        console.log('map.js - ✅ Optimized ResizeObserver attached to map container');
 
         // CRITICAL: Also watch the left panel for size changes
         const leftPanel = document.getElementById('left-panel');
@@ -695,7 +605,6 @@ function setupMapResizeHandling() {
                     }
                     
                     resizeTimeout = setTimeout(() => {
-                        console.log(`map.js - 📐 Left panel resized to ${newPanelSize.width}px`);
                         contractMap.invalidateSize();
                         forceConsistentView();
                         lastPanelSize = newPanelSize;
@@ -704,7 +613,6 @@ function setupMapResizeHandling() {
             });
             
             panelResizeObserver.observe(leftPanel);
-            console.log('map.js - ✅ ResizeObserver attached to left panel');
         }
     }
 
@@ -727,7 +635,6 @@ function setupMapResizeHandling() {
             
             if (hasSignificantChanges && contractMap) {
                 mutationTimeout = setTimeout(() => {
-                    console.log(`map.js - 📐 Page content changed (#${mutationCount}) - invalidating map size`);
                     contractMap.invalidateSize();
                     mutationCount = 0; // Reset counter after handling
                 }, 300); // Longer delay to batch changes
@@ -743,14 +650,11 @@ function setupMapResizeHandling() {
             subtree: false, // Don't watch deep changes
             attributes: false // Don't watch attribute changes
         });
-        
-        console.log('map.js - ✅ Optimized MutationObserver attached to contract container');
     }
 
     // Window resize listener as backup
     window.addEventListener('resize', () => {
         if (contractMap) {
-            console.log('map.js - 🪟 Window resized');
             contractMap.invalidateSize();
             forceConsistentView();
         }
@@ -814,11 +718,8 @@ function isContractInEnabledRegion(contract, enabledRegions) {
  */
 function smartZoomToContracts(contracts) {
     if (!contractMap || !contracts || contracts.length === 0) {
-        console.log('🚫 Cannot execute smart view - missing map or contracts');
         return;
     }
-    
-    console.log('🎯 Smart View - Applying intelligent zoom based on user preferences');
     
     // Trigger a complete refresh with Smart View zoom logic
     refreshContractMarkers(contracts);
@@ -878,7 +779,7 @@ window.testSmartView = function() {
     let enabled = [];
     if (window.profileManager && typeof window.profileManager.getMapRegions === 'function') {
         enabled = window.profileManager.getMapRegions();
-        console.log(`🗺️ Currently enabled regions: [${enabled.join(', ')}]`);
+
     } else {
         console.log('⚠️ No profile manager available');
     }
@@ -886,7 +787,7 @@ window.testSmartView = function() {
     // Simulate and execute the smart zoom
     if (window.logbookApp && window.logbookApp.contracts) {
         const contracts = window.logbookApp.contracts;
-        console.log(`📊 Total contracts: ${contracts.length}`);
+
         
         // Show which contracts would be included
         const included = contracts.filter(contract => 
@@ -896,10 +797,7 @@ window.testSmartView = function() {
         included.forEach(c => console.log(`   - ${c.hospital_name} (${c.latitude}, ${c.longitude})`));
         
         // Actually execute the smart view
-        console.log('🎯 Executing smart view...');
         smartZoomToContracts(contracts);
-    } else {
-        console.log("ℹ️ No contracts loaded yet - load some contracts to test");
     }
 };
 
@@ -908,10 +806,7 @@ window.testSmartView = function() {
  */
 window.triggerSmartView = function() {
     if (window.logbookApp && window.logbookApp.contracts) {
-        console.log('🎯 Manually triggering smart view refresh...');
         refreshContractMarkers(window.logbookApp.contracts);
-    } else {
-        console.log('⚠️ No contracts available for smart view');
     }
 };
 
@@ -922,7 +817,7 @@ window.forceSmartViewRefresh = function() {
     console.log('🔧 FORCING SMART VIEW REFRESH');
     if (window.logbookApp && window.logbookApp.contracts) {
         console.log('🔄 Clearing all markers and re-applying Smart View filtering...');
-        console.log(`📊 About to refresh with ${window.logbookApp.contracts.length} contracts`);
+
         refreshContractMarkers(window.logbookApp.contracts);
         console.log('✅ Smart View refresh complete!');
     } else {
@@ -943,7 +838,7 @@ window.findGuamContract = function() {
     }
     
     const contracts = window.logbookApp.contracts;
-    console.log(`📊 Searching through ${contracts.length} contracts...`);
+
     
     // Find Guam contract specifically
     const guamContract = contracts.find(c => 
@@ -974,250 +869,15 @@ window.findGuamContract = function() {
     }
 };
 
-/**
- * Debug the profile manager and region retrieval
- */
-window.debugProfileManager = function() {
-    console.log('🔍 DEBUGGING PROFILE MANAGER');
-    console.log('=================================');
-    
-    console.log('1. Checking window.profileManager...');
-    console.log('profileManager exists:', !!window.profileManager);
-    
-    if (window.profileManager) {
-        console.log('2. Checking getMapRegions method...');
-        console.log('getMapRegions method exists:', typeof window.profileManager.getMapRegions === 'function');
-        
-        if (typeof window.profileManager.getMapRegions === 'function') {
-            console.log('3. Calling getMapRegions...');
-            try {
-                const regions = window.profileManager.getMapRegions();
-                console.log('✅ Returned regions:', regions);
-                console.log('✅ Regions type:', typeof regions);
-                console.log('✅ Regions length:', regions ? regions.length : 'N/A');
-            } catch (error) {
-                console.log('❌ Error calling getMapRegions:', error);
-            }
-        }
-    }
-    
-    console.log('\n4. Checking current profile form state...');
-    const checkboxes = document.querySelectorAll('input[type="checkbox"][name^="map_region_"]');
-    console.log(`Found ${checkboxes.length} region checkboxes`);
-    checkboxes.forEach(cb => {
-        console.log(`  ${cb.name}: ${cb.checked ? '✅' : '❌'} checked`);
-    });
-    
-    console.log('\n5. Testing Smart View integration...');
-    if (window.profileManager && typeof window.profileManager.getMapRegions === 'function') {
-        const enabledRegions = window.profileManager.getMapRegions();
-        console.log(`🎯 Smart View should filter to: [${enabledRegions.join(', ')}]`);
-        
-        if (enabledRegions.length === 1 && enabledRegions[0] === 'conus') {
-            console.log('✅ Perfect! Only CONUS enabled - should show only CONUS contracts');
-        }
-    }
-};
 
-/**
- * Debug which contracts should be visible vs filtered out
- */
-window.debugContractFiltering = function() {
-    console.log('🔍 DEBUGGING CONTRACT FILTERING');
-    console.log('=====================================');
-    
-    if (!window.logbookApp || !window.logbookApp.contracts) {
-        console.log('⚠️ No contracts loaded');
-        return;
-    }
-    
-    // Get current enabled regions
-    let enabledRegions = [];
-    if (window.profileManager && typeof window.profileManager.getMapRegions === 'function') {
-        enabledRegions = window.profileManager.getMapRegions();
-    }
-    
-    console.log(`🗺️ Currently enabled regions: [${enabledRegions.join(', ')}]`);
-    console.log(`📋 Total contracts: ${window.logbookApp.contracts.length}\n`);
-    
-    const shouldShow = [];
-    const shouldHide = [];
-    
-    window.logbookApp.contracts.forEach(contract => {
-        const included = isContractInEnabledRegion(contract, enabledRegions);
-        
-        // Determine which region this contract belongs to
-        let contractRegion = 'unknown';
-        Object.keys(REGION_BOUNDS).forEach(region => {
-            if (isContractInEnabledRegion(contract, [region])) {
-                contractRegion = region;
-            }
-        });
-        
-        const entry = `${contract.hospital_name} (${contractRegion})`;
-        
-        if (included) {
-            shouldShow.push(entry);
-        } else {
-            shouldHide.push(entry);
-        }
-    });
-    
-    console.log('✅ SHOULD BE VISIBLE:');
-    shouldShow.forEach(c => console.log(`   • ${c}`));
-    
-    console.log('\n❌ SHOULD BE HIDDEN:');
-    shouldHide.forEach(c => console.log(`   • ${c}`));
-    
-    console.log(`\n📊 SUMMARY: ${shouldShow.length} visible, ${shouldHide.length} hidden`);
-};
 
-/**
- * Debug Pacific regions specifically (Guam, American Samoa)
- */
-window.debugPacificRegions = function() {
-    console.log('🏝️ DEBUGGING PACIFIC REGIONS - Guam & American Samoa');
-    console.log('=======================================================');
-    
-    if (!window.logbookApp || !window.logbookApp.contracts) {
-        console.log('⚠️ No contracts loaded');
-        return;
-    }
-    
-    console.log(`📊 Total contracts loaded: ${window.logbookApp.contracts.length}`);
-    
-    // List ALL contracts to see what we have
-    console.log('\n📋 ALL CONTRACTS:');
-    window.logbookApp.contracts.forEach((contract, i) => {
-        console.log(`${i+1}. ${contract.hospital_name} (${contract.latitude}, ${contract.longitude})`);
-    });
-    
-    // Find Guam and American Samoa contracts
-    const pacificContracts = window.logbookApp.contracts.filter(c => 
-        c.hospital_name.toLowerCase().includes('guam') || 
-        c.hospital_name.toLowerCase().includes('samoa')
-    );
-    
-    console.log(`\n🏝️ Found ${pacificContracts.length} Pacific contracts:`);
-    
-    if (pacificContracts.length === 0) {
-        console.log('❌ No Pacific contracts found! This explains why Guam/American Samoa not showing up.');
-        return;
-    }
-    
-    pacificContracts.forEach(contract => {
-        const lat = parseFloat(contract.latitude);
-        const lng = parseFloat(contract.longitude);
-        
-        console.log(`\n📍 ${contract.hospital_name}`);
-        console.log(`   Raw coordinates: (${lat}, ${lng})`);
-        
-        // Test against Guam bounds
-        const guamBounds = REGION_BOUNDS['guam'];
-        const [[guamMinLat, guamMinLng], [guamMaxLat, guamMaxLng]] = guamBounds;
-        console.log(`   Guam bounds: (${guamMinLat}, ${guamMinLng}) to (${guamMaxLat}, ${guamMaxLng})`);
-        
-        const normalizedLng = lng > 0 ? lng : lng + 360;
-        console.log(`   Normalized lng: ${normalizedLng}`);
-        
-        const guamMatch = isContractInEnabledRegion(contract, ['guam']);
-        console.log(`   Matches Guam region: ${guamMatch ? '✅' : '❌'}`);
-        
-        // Test against American Samoa bounds  
-        const samoaBounds = REGION_BOUNDS['american-samoa'];
-        const [[samoaMinLat, samoaMinLng], [samoaMaxLat, samoaMaxLng]] = samoaBounds;
-        console.log(`   American Samoa bounds: (${samoaMinLat}, ${samoaMinLng}) to (${samoaMaxLat}, ${samoaMaxLng})`);
-        
-        const samoaMatch = isContractInEnabledRegion(contract, ['american-samoa']);
-        console.log(`   Matches American Samoa region: ${samoaMatch ? '✅' : '❌'}`);
-    });
-    
-    // Test current user preferences
-    console.log('\n🎯 CURRENT USER PREFERENCES:');
-    if (window.profileManager && typeof window.profileManager.getMapRegions === 'function') {
-        const enabledRegions = window.profileManager.getMapRegions();
-        console.log(`   Enabled regions: [${enabledRegions.join(', ')}]`);
-        console.log(`   Guam enabled: ${enabledRegions.includes('guam') ? '✅' : '❌'}`);
-        console.log(`   American Samoa enabled: ${enabledRegions.includes('american-samoa') ? '✅' : '❌'}`);
-    }
-};
 
-/**
- * Debug function to check contract coordinates and Smart View filtering
- */
-window.debugSmartView = function() {
-    console.log('🔍 DEBUGGING SMART VIEW FILTERING');
-    console.log('===============================================');
-    
-    if (!window.logbookApp || !window.logbookApp.contracts) {
-        console.log('⚠️ No contracts loaded');
-        return;
-    }
-    
-    // Get enabled regions
-    let enabledRegions = [];
-    if (window.profileManager && typeof window.profileManager.getMapRegions === 'function') {
-        enabledRegions = window.profileManager.getMapRegions();
-    }
-    
-    console.log(`🗺️ Enabled regions: [${enabledRegions.join(', ')}]`);
-    console.log('📍 Available region bounds:');
-    Object.keys(REGION_BOUNDS).forEach(region => {
-        const bounds = REGION_BOUNDS[region];
-        console.log(`  ${region}: [${bounds[0][0]}, ${bounds[0][1]}] to [${bounds[1][0]}, ${bounds[1][1]}]`);
-    });
-    
-    console.log('\n📋 Contract Analysis:');
-    window.logbookApp.contracts.forEach((contract, i) => {
-        const lat = parseFloat(contract.latitude);
-        const lng = parseFloat(contract.longitude);
-        const normalizedLng = lng > 0 ? -lng : lng; // Pacific normalization
-        
-        console.log(`\n${i+1}. ${contract.hospital_name}`);
-        console.log(`   Raw coordinates: (${lat}, ${lng})`);
-        console.log(`   Normalized coords: (${lat}, ${normalizedLng})`);
-        
-        // Check which regions this contract matches
-        const matchingRegions = [];
-        Object.keys(REGION_BOUNDS).forEach(region => {
-            const bounds = REGION_BOUNDS[region];
-            const [[minLat, minLng], [maxLat, maxLng]] = bounds;
-            
-            // Check with raw coordinates
-            if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
-                matchingRegions.push(`${region} (raw)`);
-            }
-            
-            // Check with normalized coordinates
-            if (lat >= minLat && lat <= maxLat && normalizedLng >= minLng && normalizedLng <= maxLng) {
-                matchingRegions.push(`${region} (normalized)`);
-            }
-        });
-        
-        console.log(`   Matches regions: ${matchingRegions.length > 0 ? matchingRegions.join(', ') : 'NONE'}`);
-        
-        // Check if included in enabled regions
-        const included = isContractInEnabledRegion(contract, enabledRegions);
-        console.log(`   Included in smart view: ${included ? '✅' : '❌'}`);
-    });
-};
 
-/**
- * Test smart view capabilities and regional zoom functions
- */
-window.testRegionalSmartView = function() {
-    console.log('🧪 TESTING SMART VIEW CAPABILITIES');
-    console.log('📍 Available regions:', Object.keys(REGION_BOUNDS));
-    console.log('🎯 Debug Commands:');
-    console.log('  • debugContractFiltering() - See which contracts should be visible/hidden');
-    console.log('  • debugProfileManager() - Check if profile manager is working');
-    console.log('  • debugPacificRegions() - Debug Guam & American Samoa coordinate issues');
-    console.log('  • debugSmartView() - Debug coordinate matching and filtering issues');
-    console.log('  • forceSmartViewRefresh() - Force immediate Smart View refresh');
-    console.log('🎯 Action Commands:');
-    console.log('  • testSmartView() - Analyze and execute smart view with current preferences');
-    console.log('  • triggerSmartView() - Execute smart view immediately');
-};
+
+
+
+
+
 
 // MapController interface expected by logbook.js
 window.MapController = {
@@ -1230,7 +890,6 @@ window.MapController = {
     updateSmartView: function() {
         // Trigger smart view when map preferences change
         if (window.logbookApp && window.logbookApp.contracts) {
-            console.log('🎯 Profile preferences changed - updating smart view');
             smartZoomToContracts(window.logbookApp.contracts);
         }
     }
@@ -1240,14 +899,11 @@ window.MapController = {
  * Refresh all contract markers on the map (from reference)
  */
 function refreshContractMarkers(contracts) {
-    console.log(`map.js - 🔄 refreshContractMarkers called with ${contracts ? contracts.length : 0} contracts`);
-    
     // Clear existing markers
     clearContractMarkers();
     
     // Invalidate map size to account for sidebar changes
     if (contractMap) {
-        console.log('🔄 Invalidating map size after sidebar layout change');
         contractMap.invalidateSize();
     }
     
@@ -1255,13 +911,8 @@ function refreshContractMarkers(contracts) {
     if (contracts && contracts.length > 0) {
         // Get user's enabled regions
         let enabledRegions = [];
-        console.log('🔍 Debug: Checking profile manager...', !!window.profileManager);
         if (window.profileManager && typeof window.profileManager.getMapRegions === 'function') {
             enabledRegions = window.profileManager.getMapRegions();
-            console.log('🔍 Debug: getMapRegions() returned:', enabledRegions);
-            console.log('🔍 Debug: enabledRegions type:', typeof enabledRegions, 'length:', enabledRegions ? enabledRegions.length : 'N/A');
-        } else {
-            console.log('🚨 Debug: Profile manager or getMapRegions method not available!');
         }
         
         // Filter contracts to only those in enabled regions (Smart View filtering)
@@ -1269,8 +920,7 @@ function refreshContractMarkers(contracts) {
             isContractInEnabledRegion(contract, enabledRegions)
         );
         
-        console.log(`🎯 Smart View - Adding ${filteredContracts.length}/${contracts.length} contracts to map`);
-        console.log(`🗺️ Enabled regions: [${enabledRegions.join(', ')}]`);
+
         
         // Add only the filtered contracts to the map (Smart View filtering)
         if (filteredContracts.length > 0) {
@@ -1280,18 +930,15 @@ function refreshContractMarkers(contracts) {
             
             // Zoom to show the filtered contracts
             setTimeout(() => {
-                console.log('🎯 Smart View - Zooming to preferred region contracts');
                 fitMapToAllContracts(filteredContracts);
             }, 100);
         } else if (enabledRegions.length > 0) {
             // No contracts in enabled regions, show the regions themselves
-            console.log('🎯 Smart View - No contracts in preferred regions, showing region bounds');
             setTimeout(() => {
                 zoomToUserRegions(enabledRegions);
             }, 100);
         } else {
             // No preferences, show all contracts (traditional behavior)
-            console.log('🎯 Smart View - No regional preferences, showing all contracts');
             contracts.forEach(contract => {
                 addContractToMap(contract);
             });
@@ -1317,5 +964,5 @@ window.smartZoomToContracts = smartZoomToContracts;
 
 // Map will be initialized by logbook.js calling MapController.initialize()
 
-console.log('map.js - 🗺️ Contract marker system with zoom functionality loaded');
+
 
