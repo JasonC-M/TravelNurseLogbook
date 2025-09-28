@@ -9,11 +9,60 @@
 
 let contractMap; // Main Leaflet map instance
 
+// CONUS bounds for optimal map fitting - guarantees Maine visibility
+const CONUS_BOUNDS = [
+    [24.396308, -125.0], // Southwest corner (Southern California)
+    [49.384358, -66.93]  // Northeast corner (Maine - ensures visibility)
+];
+
+/**
+ * Console command to manually fit to CONUS bounds
+ */
+window.fitCONUS = function() {
+    if (contractMap) {
+        console.log('�️ Fitting to CONUS bounds');
+        forceConsistentView();
+    } else {
+        console.log('Map not initialized yet');
+    }
+};
+
+/**
+ * Force map to show optimal CONUS view using fitBounds
+ * Automatically calculates best center and zoom for current container size
+ */
+function forceConsistentView() {
+    if (contractMap) {
+        console.log('🗺️ Fitting to CONUS bounds');
+        contractMap.fitBounds(CONUS_BOUNDS, {
+            padding: [10, 10], // Small padding for aesthetics
+            animate: false,    // No animation during resize operations
+            maxZoom: 6.0       // Prevent over-zooming
+        });
+    }
+}
+
+/**
+ * Simple dimension logging for debugging when needed
+ */
+function logMapDimensions() {
+    if (contractMap) {
+        const mapContainer = document.getElementById('map');
+        const mapRect = mapContainer ? mapContainer.getBoundingClientRect() : null;
+        const leafletSize = contractMap.getSize();
+        const center = contractMap.getCenter();
+        const bounds = contractMap.getBounds();
+        
+        console.log(`🗺️ Map: ${mapRect.width}x${mapRect.height} container, ${leafletSize.x}x${leafletSize.y} leaflet`);
+        console.log(`🎯 Center: ${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}, Maine visible: ${bounds.getEast() >= -67.0 ? '✅' : '❌'}`);
+    }
+}
+
 /**
  * Initialize the main Leaflet map with layers
  * STEP 1: Just creates a blank map centered on CONUS with layer controls
  */
-function initializeMap() {
+async function initializeMap() {
     console.log('map.js - 🗺️ [STEP 1] Initializing basic map...');
     
     // Check if Leaflet is available
@@ -36,9 +85,19 @@ function initializeMap() {
         contractMap = L.map('map', {
             zoomSnap: 0.1,    // Allow zoom in 0.1 increments (more precise)
             zoomDelta: 0.25   // Zoom buttons/keyboard increment by 0.25
-        }).setView([39.8283, -98.5795], 5); // Center on CONUS with zoom level 5
+        });
+        
+        // Use fitBounds instead of setView - Leaflet automatically calculates optimal center and zoom!
+        console.log('🗺️ Using fitBounds to CONUS for automatic optimal centering and zoom');
+        contractMap.fitBounds(CONUS_BOUNDS, {
+            padding: [10, 10], // Small padding
+            animate: false,
+            maxZoom: 6.0
+        });
         
         console.log('map.js - ✅ Leaflet map object created successfully');
+        
+
     } catch (error) {
         console.error('map.js - ❌ Error creating Leaflet map:', error);
         return false;
@@ -70,6 +129,8 @@ function initializeMap() {
         
         // Add resize handling for when contracts load and change panel size
         setupMapResizeHandling();
+        
+
         
         console.log('map.js - ✅ [STEP 1] Basic map initialized successfully - map should be visible!');
         return true;
@@ -135,9 +196,11 @@ function setupMapResizeHandling() {
     // ResizeObserver for container size changes (when contracts load in left panel) - OPTIMIZED
     if (window.ResizeObserver) {
         let resizeTimeout = null;
-        let lastSize = { width: 0, height: 0 };
+        let lastMapSize = { width: 0, height: 0 };
+        let lastPanelSize = { width: 0, height: 0 };
         
-        const resizeObserver = new ResizeObserver(entries => {
+        // Watch the map container itself
+        const mapResizeObserver = new ResizeObserver(entries => {
             if (resizeTimeout) {
                 clearTimeout(resizeTimeout);
             }
@@ -149,20 +212,53 @@ function setupMapResizeHandling() {
             };
             
             // Only trigger if size actually changed significantly (more than 10px)
-            const sizeChanged = Math.abs(newSize.width - lastSize.width) > 10 || 
-                               Math.abs(newSize.height - lastSize.height) > 10;
+            const sizeChanged = Math.abs(newSize.width - lastMapSize.width) > 10 || 
+                               Math.abs(newSize.height - lastMapSize.height) > 10;
             
             if (sizeChanged && contractMap) {
                 resizeTimeout = setTimeout(() => {
-                    console.log(`map.js - 📐 Map container resized (${newSize.width}x${newSize.height}) - invalidating map size`);
+                    console.log(`map.js - 📐 Map container resized to ${newSize.width}x${newSize.height}`);
                     contractMap.invalidateSize();
-                    lastSize = newSize;
+                    forceConsistentView();
+                    lastMapSize = newSize;
                 }, 200); // Debounced resize handling
             }
         });
         
-        resizeObserver.observe(mapContainer);
+        mapResizeObserver.observe(mapContainer);
         console.log('map.js - ✅ Optimized ResizeObserver attached to map container');
+
+        // CRITICAL: Also watch the left panel for size changes
+        const leftPanel = document.getElementById('left-panel');
+        if (leftPanel) {
+            const panelResizeObserver = new ResizeObserver(entries => {
+                const entry = entries[0];
+                const newPanelSize = {
+                    width: entry.contentRect.width,
+                    height: entry.contentRect.height
+                };
+                
+                // When left panel changes width, the map needs to resize
+                const panelWidthChanged = Math.abs(newPanelSize.width - lastPanelSize.width) > 5;
+                
+                if (panelWidthChanged && contractMap) {
+                    // Clear any existing timeout
+                    if (resizeTimeout) {
+                        clearTimeout(resizeTimeout);
+                    }
+                    
+                    resizeTimeout = setTimeout(() => {
+                        console.log(`map.js - 📐 Left panel resized to ${newPanelSize.width}px`);
+                        contractMap.invalidateSize();
+                        forceConsistentView();
+                        lastPanelSize = newPanelSize;
+                    }, 100); // Faster response for panel changes
+                }
+            });
+            
+            panelResizeObserver.observe(leftPanel);
+            console.log('map.js - ✅ ResizeObserver attached to left panel');
+        }
     }
 
     // MutationObserver for when left panel content changes (contracts loading) - OPTIMIZED
@@ -203,6 +299,15 @@ function setupMapResizeHandling() {
         
         console.log('map.js - ✅ Optimized MutationObserver attached to contract container');
     }
+
+    // Window resize listener as backup
+    window.addEventListener('resize', () => {
+        if (contractMap) {
+            console.log('map.js - 🪟 Window resized');
+            contractMap.invalidateSize();
+            forceConsistentView();
+        }
+    });
 }
 
 //=============================================================================
@@ -223,8 +328,17 @@ window.MapController = {
 };
 
 // Temporary global function for backward compatibility
-window.refreshContractMarkers = () => {
-    console.log('map.js - 🔄 refreshContractMarkers called - will be implemented in Step 4');
+window.refreshContractMarkers = async (contracts) => {
+    console.log(`map.js - 🔄 refreshContractMarkers called with ${contracts ? contracts.length : 0} contracts`);
+    
+    // Force map resize after contracts load (fixes positioning when left panel expands)
+    if (contractMap) {
+        setTimeout(() => {
+            console.log('map.js - 🔄 Contracts loaded, resizing map for panel changes');
+            contractMap.invalidateSize();
+            forceConsistentView();
+        }, 250); // Allow time for DOM to update
+    }
 };
 
 // Map will be initialized by logbook.js calling MapController.initialize()
