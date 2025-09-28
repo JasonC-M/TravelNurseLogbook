@@ -654,6 +654,42 @@ class ProfileManager {
     this.setupMapPreferenceHandlers();
   }
 
+  // Get currently enabled map regions (for Smart View filtering)
+  getMapRegions() {
+    const enabledRegions = [];
+    
+    // Default preferences - same order as loadMapPreferences
+    const allRegions = [
+      'conus', 'alaska', 'hawaii', 'puerto-rico', 'us-virgin-islands',
+      'guam', 'american-samoa', 'northern-mariana', 'canada', 'mexico',
+      'caribbean', 'europe', 'asia-pacific', 'other-international'
+    ];
+    
+    // First try: Check if checkboxes are available and use them
+    let foundCheckboxes = false;
+    allRegions.forEach(region => {
+      const checkbox = document.getElementById(`map_region_${region}`);
+      if (checkbox) {
+        foundCheckboxes = true;
+        if (checkbox.checked) {
+          enabledRegions.push(region);
+        }
+      }
+    });
+    
+    // If no checkboxes found (profile form not loaded yet), fall back to saved profile data
+    if (!foundCheckboxes && this.userProfile && this.userProfile.map_preferences) {
+      console.log('profile.js - 🔄 Checkboxes not available, using saved profile data for Smart View');
+      Object.keys(this.userProfile.map_preferences).forEach(region => {
+        if (this.userProfile.map_preferences[region] === true) {
+          enabledRegions.push(region);
+        }
+      });
+    }
+    
+    return enabledRegions;
+  }
+
   // Setup event handlers for map preference controls
   setupMapPreferenceHandlers() {
     // Avoid duplicate handlers
@@ -676,9 +712,9 @@ class ProfileManager {
           console.log('profile.js - 📍 Map preference changed, will save when form is saved');
           
           // Update map display immediately for live preview (but don't save to database)
-          if (window.MapController && window.MapController.updateSmartBox) {
-            console.log('profile.js - 🔄 [PROFILE] Regional preference changed - updating map display (preview only)');
-            window.MapController.updateSmartBox();
+          if (window.MapController && window.MapController.updateSmartView) {
+            console.log('profile.js - 🔄 [PROFILE] Regional preference changed - updating map smart view (preview only)');
+            window.MapController.updateSmartView();
           }
         });
       }
@@ -876,10 +912,10 @@ class ProfileManager {
           window.logbookApp.updateProfileButtonText(profileBtn);
         }
 
-        // Notify map to update its filtering if preferences changed
-        if (profileData.map_preferences && window.MapController && window.MapController.updateSmartBox) {
-          console.log('profile.js - 🗺️ Triggering map update after successful preference save');
-          window.MapController.updateSmartBox();
+        // Notify map to update its smart view if preferences changed
+        if (profileData.map_preferences && window.MapController && window.MapController.updateSmartView) {
+          console.log('profile.js - 🗺️ Triggering map smart view update after successful preference save');
+          window.MapController.updateSmartView();
         }
 
         // Switch back to display mode after successful save
@@ -947,10 +983,10 @@ class ProfileManager {
         }
       });
       
-      // Update map display to reflect reverted preferences
-      if (window.MapController && window.MapController.updateSmartBox) {
-        console.log('profile.js - 🔄 [CANCEL] Reverting map display to saved preferences');
-        window.MapController.updateSmartBox();
+      // Update map smart view to reflect reverted preferences
+      if (window.MapController && window.MapController.updateSmartView) {
+        console.log('profile.js - 🔄 [CANCEL] Reverting map smart view to saved preferences');
+        window.MapController.updateSmartView();
       }
     }
     

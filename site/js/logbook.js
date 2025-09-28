@@ -387,14 +387,24 @@ class LogbookApp {
         }
       }
       
-      // Fit map to show all contracts
-      if (window.MapController && this.contracts) {
+      // Smart View - show contracts within user's preferred regions  
+      if (window.smartZoomToContracts && this.contracts) {
+        console.log('logbook.js - 🎯 Reset map button: Using smart view with user preferences');
+        window.smartZoomToContracts(this.contracts);
+      } else if (window.MapController && this.contracts) {
+        console.log('logbook.js - 🗺️ Reset map button: Fallback to traditional contract fitting');
         window.MapController.fitToContracts(this.contracts, true);
       } else {
-        // Fallback to US view if no contracts
-        const map = window.MapController ? window.MapController.getMap() : null;
-        if (map) {
-          map.setView([39.8283, -98.5795], 4);
+        // Fallback to user preferred regions or CONUS
+        if (window.zoomToUserPreferences) {
+          console.log('logbook.js - 🌍 Reset map button: No contracts, showing user preferred regions');
+          window.zoomToUserPreferences();
+        } else {
+          console.log('logbook.js - 🗺️ Reset map button: Fallback to CONUS view');
+          const map = window.MapController ? window.MapController.getMap() : null;
+          if (map) {
+            map.setView([39.8283, -98.5795], 4);
+          }
         }
       }
     });
@@ -501,19 +511,26 @@ class LogbookApp {
         this.setupUnifiedContractForm();
       }, 100);
 
-      // Load profile data and contracts at startup
+      // Load profile data FIRST, then contracts (ensures Smart View has user preferences)
       setTimeout(() => {
         if (window.profileManager && window.profileManager.loadProfileData) {
+          console.log('logbook.js - 📋 Loading profile data FIRST before contracts...');
           window.profileManager.loadProfileData().then(() => {
             // Update profile button text after profile data is loaded
             const profileBtn = document.getElementById('profile-btn');
             this.updateProfileButtonText(profileBtn);
+            
+            // NOW load contracts after profile is ready (Smart View will have preferences)
+            console.log('logbook.js - ✅ Profile loaded, now loading contracts with Smart View support');
+            this.loadContractsFromDatabase();
           }).catch(error => {
+            console.log('logbook.js - ❌ Profile load failed, loading contracts anyway');
+            this.loadContractsFromDatabase();
           });
         } else {
+          console.log('logbook.js - ⚠️ No profile manager, loading contracts directly');
+          this.loadContractsFromDatabase();
         }
-        
-        this.loadContractsFromDatabase();
       }, 500);
     }).catch(error => {
     });
