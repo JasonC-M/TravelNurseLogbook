@@ -21,14 +21,8 @@ function sortContractsByName() {
     contractCards.forEach(card => contractsContainer.appendChild(card));
     
     // Reinitialize map pins for newly sorted cards (handled automatically by map.js)
-    
-    // Refresh map view to ensure all contracts are visible
-    if (window.logbookApp && window.logbookApp.contracts && window.MapController) {
-        setTimeout(() => {
-            console.log('logbook.js - 📞 Refreshing map view after name sort');
-            window.MapController.fitToContracts(window.logbookApp.contracts, true);
-        }, 100);
-    }
+    // Note: Sorting only changes contract order - does NOT change map view
+    console.log('logbook.js - ✅ Sorted contracts by name - map view preserved');
 }
 
 // Sort contracts chronologically by start date
@@ -47,14 +41,8 @@ function sortContractsByDate() {
     contractCards.forEach(card => contractsContainer.appendChild(card));
     
     // Reinitialize map pins for newly sorted cards (handled automatically by map.js)
-    
-    // Refresh map view to ensure all contracts are visible  
-    if (window.logbookApp && window.logbookApp.contracts && window.MapController) {
-        setTimeout(() => {
-            console.log('logbook.js - 📞 Refreshing map view after date sort');
-            window.MapController.fitToContracts(window.logbookApp.contracts, true);
-        }, 100);
-    }
+    // Note: Sorting only changes contract order - does NOT change map view
+    console.log('logbook.js - ✅ Sorted contracts by date - map view preserved');
 }
 
 //=============================================================================
