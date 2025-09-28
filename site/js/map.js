@@ -58,6 +58,131 @@ function logMapDimensions() {
     }
 }
 
+//=============================================================================
+// STEP 2: CONTRACT MARKERS SYSTEM (from reference)
+//=============================================================================
+
+// Global variables for map markers and circles
+let contractMarkers = [];
+let contractCircles = [];
+let customMapIcon = null;
+
+/**
+ * Create custom map icon with bottom-point anchoring (from reference)
+ */
+function createCustomMapIcon() {
+    if (!customMapIcon) {
+        customMapIcon = L.icon({
+            iconUrl: 'images/map_pin.png',
+            iconSize: [32, 32],        // Size of the icon
+            iconAnchor: [16, 32],      // Anchor point (bottom center of icon)
+            popupAnchor: [0, -32],     // Popup appears above the icon
+            tooltipAnchor: [0, -32]    // Tooltip appears above the icon
+        });
+    }
+    return customMapIcon;
+}
+
+/**
+ * Get tax compliance circle color based on end date (from reference)
+ */
+function getCircleColor(endDate) {
+    const today = new Date();
+    
+    if (!endDate) {
+        return '#2196F3'; // Blue for current (no end date)
+    }
+    
+    const contractEndDate = new Date(endDate);
+    
+    if (contractEndDate > today) {
+        return '#2196F3'; // Blue for current contracts
+    }
+    
+    const timeDifference = today - contractEndDate;
+    const twoYearsInMs = 2 * 365.25 * 24 * 60 * 60 * 1000;
+    
+    if (timeDifference < twoYearsInMs) {
+        return '#F44336'; // Red for restricted areas
+    } else {
+        return '#4CAF50'; // Green for available areas
+    }
+}
+
+/**
+ * Add a contract to the map with marker and circle (from reference)
+ */
+function addContractToMap(contract) {
+    if (!contract.latitude || !contract.longitude || !contractMap) {
+        return;
+    }
+    
+    const lat = parseFloat(contract.latitude);
+    let lng = parseFloat(contract.longitude);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        return;
+    }
+    
+    // Normalize Pacific coordinates for consistent display
+    if (lng > 0 && lng <= 180) {
+        lng = lng - 360; // Convert positive longitude to negative equivalent
+    }
+    
+    // Create marker with custom icon
+    const marker = L.marker([lat, lng], {
+        icon: createCustomMapIcon()
+    }).addTo(contractMap);
+    
+    // Create tooltip content matching card format
+    const tooltipContent = `
+        <strong>${contract.hospital_name}</strong><br>
+        ${contract.address || 'Address not provided'}<br>
+        ${contract.start_date} → ${contract.end_date || 'Ongoing'}
+    `;
+    
+    // Bind tooltip to marker
+    marker.bindTooltip(tooltipContent, {
+        permanent: false,
+        direction: 'top'
+    });
+    
+    // Create 50-mile radius circle
+    const circleColor = getCircleColor(contract.end_date);
+    const circle = L.circle([lat, lng], {
+        radius: 80467, // 50 miles in meters
+        color: circleColor,
+        weight: 2,
+        opacity: 0.8,
+        fillColor: circleColor,
+        fillOpacity: 0.2
+    }).addTo(contractMap);
+    
+    // Store references for later management
+    contractMarkers.push({
+        marker: marker,
+        circle: circle,
+        contractId: contract.id,
+        latitude: lat,
+        longitude: lng
+    });
+}
+
+/**
+ * Remove all contract markers and circles from map (from reference)
+ */
+function clearContractMarkers() {
+    contractMarkers.forEach(item => {
+        if (item.marker) {
+            contractMap.removeLayer(item.marker);
+        }
+        if (item.circle) {
+            contractMap.removeLayer(item.circle);
+        }
+    });
+    contractMarkers = [];
+}
+
 /**
  * Initialize the main Leaflet map with layers
  * STEP 1: Just creates a blank map centered on CONUS with layer controls
@@ -97,6 +222,9 @@ async function initializeMap() {
         
         console.log('map.js - ✅ Leaflet map object created successfully');
         
+        // Initialize marker arrays (from reference)
+        contractMarkers = [];
+        contractCircles = [];
 
     } catch (error) {
         console.error('map.js - ❌ Error creating Leaflet map:', error);
@@ -327,19 +455,41 @@ window.MapController = {
     getMap: () => contractMap
 };
 
-// Temporary global function for backward compatibility
-window.refreshContractMarkers = async (contracts) => {
+/**
+ * Refresh all contract markers on the map (from reference)
+ */
+function refreshContractMarkers(contracts) {
     console.log(`map.js - 🔄 refreshContractMarkers called with ${contracts ? contracts.length : 0} contracts`);
     
-    // Force map resize after contracts load (fixes positioning when left panel expands)
+    // Clear existing markers
+    clearContractMarkers();
+    
+    // Invalidate map size to account for sidebar changes
     if (contractMap) {
-        setTimeout(() => {
-            console.log('map.js - 🔄 Contracts loaded, resizing map for panel changes');
-            contractMap.invalidateSize();
-            forceConsistentView();
-        }, 250); // Allow time for DOM to update
+        console.log('🔄 Invalidating map size after sidebar layout change');
+        contractMap.invalidateSize();
     }
-};
+    
+    // Add markers for all contracts
+    if (contracts && contracts.length > 0) {
+        contracts.forEach(contract => {
+            addContractToMap(contract);
+        });
+        
+        // Use our clean forceConsistentView instead of fitMapToAllContracts
+        setTimeout(() => {
+            forceConsistentView();
+        }, 100);
+    } else {
+        // No contracts - show default CONUS view
+        if (contractMap) {
+            forceConsistentView();
+        }
+    }
+}
+
+// Expose for backward compatibility  
+window.refreshContractMarkers = refreshContractMarkers;
 
 // Map will be initialized by logbook.js calling MapController.initialize()
 
