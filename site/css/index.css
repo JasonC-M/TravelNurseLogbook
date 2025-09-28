@@ -198,24 +198,7 @@ body {
     font-weight: bold;
 }
 
-.error-message, .success-message {
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 16px;
-    display: none;
-}
 
-.error-message {
-    background: #fee;
-    color: #c33;
-    border: 1px solid #fcc;
-}
-
-.success-message {
-    background: #efe;
-    color: #3c3;
-    border: 1px solid #cfc;
-}
 
 .checkbox-group {
     display: flex;

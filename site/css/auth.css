@@ -124,25 +124,7 @@
     display: none;
 }
 
-.error-message {
-    background: #ffe6e6;
-    color: #d63031;
-    padding: 12px 16px;
-    border-radius: 6px;
-    border-left: 4px solid #d63031;
-    font-size: 14px;
-    margin: 10px 0;
-}
 
-.success-message {
-    background: #e6ffe6;
-    color: #00b894;
-    padding: 12px 16px;
-    border-radius: 6px;
-    border-left: 4px solid #00b894;
-    font-size: 14px;
-    margin: 10px 0;
-}
 
 .auth-links {
     text-align: center;

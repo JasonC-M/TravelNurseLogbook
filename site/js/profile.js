@@ -607,24 +607,14 @@ class ProfileManager {
     }
   }
 
-  // Show profile error message
+  // Log profile error to console
   showProfileError(message) {
-    const errorDiv = document.getElementById('profile-error');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    setTimeout(() => {
-      errorDiv.style.display = 'none';
-    }, 5000);
+    console.error('Profile error:', message);
   }
 
-  // Show profile success message
+  // Log profile success to console
   showProfileSuccess(message) {
-    const successDiv = document.getElementById('profile-success');
-    successDiv.textContent = message;
-    successDiv.style.display = 'block';
-    setTimeout(() => {
-      successDiv.style.display = 'none';
-    }, 3000);
+    console.log('Profile success:', message);
   }
 
   // Get profile data for other modules

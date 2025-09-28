@@ -241,33 +241,5 @@ class Auth {
 const auth = new Auth();
 window.auth = auth; // Make available globally
 
-// Utility functions for form handling
-function showError(elementId, message) {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-    }
-}
-
-function hideError(elementId) {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.style.display = 'none';
-    }
-}
-
-function showSuccess(elementId, message) {
-    const successElement = document.getElementById(elementId);
-    if (successElement) {
-        successElement.textContent = message;
-        successElement.style.display = 'block';
-    }
-}
-
-function hideSuccess(elementId) {
-    const successElement = document.getElementById(elementId);
-    if (successElement) {
-        successElement.style.display = 'none';
-    }
-}
+// Utility functions for console logging only - no visual messages
+// All errors and success messages now go to browser console for debugging

@@ -78,13 +78,13 @@ async function handleSignIn(e) {
 
     // UI validation
     if (!email || !password) {
-        showError('signin-error', 'Please fill in all fields');
+        console.error('Sign in error: Please fill in all fields');
         return;
     }
 
     // Ensure auth is available
     if (!window.auth) {
-        showError('signin-error', 'Authentication system not ready. Please refresh the page.');
+        console.error('Sign in error: Authentication system not ready. Please refresh the page.');
         return;
     }
     
@@ -92,10 +92,10 @@ async function handleSignIn(e) {
     const result = await window.auth.signIn(email, password);
     
     if (result.success) {
-        showSuccess('signin-success', 'Login successful! Redirecting...');
+        console.log('Sign in success: Login successful! Redirecting...');
         // auth.js handles the redirect automatically
     } else {
-        showError('signin-error', result.error);
+        console.error('Sign in error:', result.error);
     }
 }
 
@@ -110,29 +110,29 @@ async function handleSignUp(e) {
     const confirm = formData.get('confirm');
 
     if (!firstName || !lastName || !email || !password || !confirm) {
-        showError('signup-error', 'Please fill in all fields');
+        console.error('Sign up error: Please fill in all fields');
         return;
     }
 
     if (password !== confirm) {
-        showError('signup-error', 'Passwords do not match');
+        console.error('Sign up error: Passwords do not match');
         return;
     }
 
     if (password.length < 6) {
-        showError('signup-error', 'Password must be at least 6 characters');
+        console.error('Sign up error: Password must be at least 6 characters');
         return;
     }
 
     // Check password complexity
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-        showError('signup-error', 'Password must contain at least one lowercase letter, one uppercase letter, and one number');
+        console.error('Sign up error: Password must contain at least one lowercase letter, one uppercase letter, and one number');
         return;
     }
 
     // Ensure auth is available
     if (!window.auth) {
-        showError('signup-error', 'Authentication system not ready. Please refresh the page.');
+        console.error('Sign up error: Authentication system not ready. Please refresh the page.');
         return;
     }
     
@@ -147,9 +147,9 @@ async function handleSignUp(e) {
     });
     
     if (result.success) {
-        showSuccess('signup-success', result.message);
+        console.log('Sign up success:', result.message);
     } else {
-        showError('signup-error', result.error);
+        console.error('Sign up error:', result.error);
     }
 }
 
@@ -160,13 +160,13 @@ async function handlePasswordReset(e) {
     const email = formData.get('email');
 
     if (!email) {
-        showError('reset-error', 'Please enter your email address');
+        console.error('Password reset error: Please enter your email address');
         return;
     }
 
     // Ensure auth is available
     if (!window.auth) {
-        showError('reset-error', 'Authentication system not ready. Please refresh the page.');
+        console.error('Password reset error: Authentication system not ready. Please refresh the page.');
         return;
     }
     
@@ -174,38 +174,8 @@ async function handlePasswordReset(e) {
     const result = await window.auth.resetPassword(email);
     
     if (result.success) {
-        showSuccess('reset-success', result.message);
+        console.log('Password reset success:', result.message);
     } else {
-        showError('reset-error', result.error);
+        console.error('Password reset error:', result.error);
     }
-}
-
-// Utility functions
-function showError(elementId, message) {
-    clearMessages();
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-        setTimeout(() => {
-            errorElement.style.display = 'none';
-        }, 5000);
-    }
-}
-
-function showSuccess(elementId, message) {
-    clearMessages();
-    const successElement = document.getElementById(elementId);
-    if (successElement) {
-        successElement.textContent = message;
-        successElement.style.display = 'block';
-    }
-}
-
-function clearMessages() {
-    const messages = document.querySelectorAll('.error-message, .success-message');
-    messages.forEach(msg => {
-        msg.style.display = 'none';
-        msg.textContent = '';
-    });
 }

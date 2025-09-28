@@ -742,19 +742,7 @@ button.danger-btn:hover {
     color: #666;
 }
 
-.error-message {
-    background: #dc3545;
-    color: white;
-    padding: 8px;
-    margin: 8px 0;
-}
 
-.success-message {
-    background: #28a745;
-    color: white;
-    padding: 8px;
-    margin: 8px 0;
-}
 
 /* Contract Form Styles - Uses universal button classes */
 #contract-form button {
