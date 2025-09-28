@@ -563,7 +563,7 @@ class LogbookApp {
   async loadComponents() {
     const components = [
       { path: 'components/profile-form.html', target: '#profile-slideout' },
-      { path: 'components/unified-contract-form.html', target: '#contract-slideout' }
+      { path: 'components/contract-form.html', target: '#contract-slideout' }
     ];
     
     try {

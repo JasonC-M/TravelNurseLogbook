@@ -1,7 +1,18 @@
-<!-- Profile Content -->
 <div class="profile-header">
   <h2>User Profile</h2>
-  <button id="close-profile" class="close-btn">&times;</button>
+  <div class="header-actions">
+    <!-- Display Mode Actions -->
+    <div class="display-actions">
+      <button type="button" id="edit-profile-btn" class="btn btn--secondary btn--compact">Edit</button>
+      <button type="button" id="close-profile-display-btn" class="btn btn--secondary btn--compact">Close</button>
+    </div>
+    
+    <!-- Edit Mode Actions -->
+    <div class="edit-actions" style="display: none;">
+      <button type="button" id="save-profile-btn" class="btn btn--secondary btn--compact">Save</button>
+      <button type="button" id="cancel-profile-edit-btn" class="btn btn--secondary btn--compact">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <div class="profile-content">
@@ -158,21 +169,6 @@
         </small>
       </div>
 
-      <!-- Form Actions -->
-      <div class="profile-section form-actions">
-        <!-- Display Mode Actions -->
-        <div class="display-actions">
-          <button type="button" id="edit-profile-btn" class="primary-btn">Edit Profile</button>
-          <button type="button" id="close-profile-display-btn" class="secondary-btn">Close</button>
-        </div>
-        
-        <!-- Edit Mode Actions -->
-        <div class="edit-actions" style="display: none;">
-          <button type="button" id="save-profile-btn" class="primary-btn">Save Profile</button>
-          <button type="button" id="cancel-profile-edit-btn" class="secondary-btn">Cancel</button>
-        </div>
-      </div>
-
       <!-- Danger Zone - Only visible in edit mode -->
       <div class="danger-zone edit-only" style="display: none; padding: 20px; margin-top: 30px; border: 2px solid #dc3545; border-radius: 8px; background-color: #fff5f5;">
         <h3 style="margin: 0 0 20px 0; padding: 0 0 10px 0; color: #dc3545; border-bottom: 1px solid #dc3545;">⚠️ Danger Zone</h3>
@@ -180,7 +176,7 @@
           <strong>Warning:</strong> This action will permanently delete your entire account, 
           all profile data, contract history, and cannot be undone.
         </p>
-        <button id="profile-delete-btn" class="danger-btn">🗑️ DELETE EVERYTHING</button>
+        <button id="profile-delete-btn" class="btn btn--danger btn--standard">🗑️ DELETE EVERYTHING</button>
       </div>
     </div>
 

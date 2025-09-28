@@ -354,6 +354,17 @@ html, body {
     font-size: 1.2em;
 }
 
+/* Universal form header actions styling */
+.header-actions {
+    display: flex;
+    align-items: center;
+}
+
+.header-actions > div {
+    display: flex;
+    align-items: center;
+}
+
 .close-btn {
     background: none;
     border: none;
@@ -370,6 +381,10 @@ html, body {
     padding: 15px;
     min-height: 100%;
     box-sizing: border-box;
+    /* Ensure smooth scrolling in content area */
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 .profile-section {
@@ -448,14 +463,95 @@ html, body {
     border: 1px solid #e9ecef;
 }
 
-/* Button Classes for Forms */
-.primary-btn, .secondary-btn, .danger-btn {
+/* =================================================================
+   UNIFIED BUTTON SYSTEM
+   ================================================================= */
+
+/* Base button foundation - all buttons inherit these properties */
+.btn {
     border: none;
-    padding: 10px 16px;
-    margin: 5px;
     cursor: pointer;
     border-radius: 4px;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Button size variants */
+.btn--standard {
+    padding: 10px 16px;
+    margin: 5px;
     font-size: 14px;
+    min-height: 38px;
+}
+
+.btn--compact {
+    padding: 6px 12px;
+    margin: 0 8px 0 0; /* Add right margin for spacing between buttons */
+    font-size: 13px;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+}
+
+.btn--compact:last-child {
+    margin-right: 0; /* Remove margin from last button */
+}
+
+/* Button color variants */
+.btn--primary {
+    background: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.btn--primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn--secondary {
+    background: #6c757d;
+    color: white;
+    border: 1px solid #6c757d;
+}
+
+.btn--secondary:hover {
+    background: #545b62;
+    border-color: #545b62;
+}
+
+.btn--danger {
+    background: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+}
+
+.btn--danger:hover {
+    background: #c82333;
+    border-color: #c82333;
+}
+
+/* Legacy button classes - redirect to unified system with higher specificity */
+.profile-slideout .primary-btn,
+.contract-slideout .primary-btn,
+button.primary-btn {
+    background: #6c757d;
+    color: white;
+    border: 1px solid #6c757d;
+    padding: 6px 12px;
+    margin: 0 8px 0 0;
+    font-size: 13px;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
     font-weight: 500;
     text-align: center;
     display: inline-block;
@@ -463,31 +559,65 @@ html, body {
     transition: background-color 0.15s ease-in-out;
 }
 
-.primary-btn {
+.profile-slideout .primary-btn:hover,
+.contract-slideout .primary-btn:hover,
+button.primary-btn:hover {
+    background: #545b62;
+    border-color: #545b62;
+}
+
+.profile-slideout .secondary-btn,
+.contract-slideout .secondary-btn,
+button.secondary-btn {
     background: #6c757d;
     color: white;
+    border: 1px solid #6c757d;
+    padding: 6px 12px;
+    margin: 0 8px 0 0;
+    font-size: 13px;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+    transition: background-color 0.15s ease-in-out;
 }
 
-.primary-btn:hover {
+.profile-slideout .secondary-btn:hover,
+.contract-slideout .secondary-btn:hover,
+button.secondary-btn:hover {
     background: #545b62;
+    border-color: #545b62;
 }
 
-.secondary-btn {
-    background: #6c757d;
-    color: white;
-}
-
-.secondary-btn:hover {
-    background: #545b62;
-}
-
-.danger-btn {
+.profile-slideout .danger-btn,
+.contract-slideout .danger-btn,
+button.danger-btn {
     background: #dc3545;
     color: white;
+    border: 1px solid #dc3545;
+    padding: 10px 16px;
+    margin: 5px;
+    font-size: 14px;
+    min-height: 38px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+    transition: background-color 0.15s ease-in-out;
 }
 
-.danger-btn:hover {
+.profile-slideout .danger-btn:hover,
+.contract-slideout .danger-btn:hover,
+button.danger-btn:hover {
     background: #c82333;
+    border-color: #c82333;
 }
 
 /* Form Actions Container */
@@ -610,8 +740,8 @@ html, body {
     background: #545b62 !important;
 }
 
-/* Unified Contract Form Styles */
-.unified-contract-form {
+/* Contract Form Styles */
+.contract-form {
     background: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 8px;
@@ -619,64 +749,44 @@ html, body {
     margin: 20px 0;
 }
 
-.unified-contract-form h3 {
+.contract-form h3 {
     color: #0066cc;
     margin-bottom: 20px;
     border-bottom: 2px solid #e7f3ff;
     padding-bottom: 10px;
 }
 
-.unified-contract-form .form-row {
+.contract-form .form-row {
     display: flex;
     gap: 15px;
     margin-bottom: 15px;
     align-items: center;
 }
 
-.unified-contract-form .form-group {
+.contract-form .form-group {
     flex: 1;
 }
 
-.unified-contract-form .form-group.half-width {
+.contract-form .form-group.half-width {
     flex: 0 0 48%;
 }
 
-.unified-contract-form input[readonly] {
+.contract-form input[readonly] {
     background-color: #e9ecef;
     opacity: 1;
 }
 
-.unified-contract-form .mode-actions {
+.contract-form .mode-actions {
     margin-top: 20px;
     display: flex;
-    gap: 10px;
     justify-content: flex-end;
 }
 
-.unified-contract-form .mode-actions.hidden {
+.contract-form .mode-actions.hidden {
     display: none;
 }
 
-/* Mode-specific button styling - All buttons use universal grey styling */
-.unified-contract-form .create-actions .btn-primary {
-    background: #6c757d;
-    border-color: #6c757d;
-}
-
-.unified-contract-form .create-actions .btn-primary:hover {
-    background: #545b62;
-    border-color: #545b62;
-}
-
-.unified-contract-form .edit-actions .btn-primary {
-    background: #6c757d;
-    border-color: #6c757d;
-}
-
-.unified-contract-form .edit-actions .btn-primary:hover {
-    background: #545b62;
-    border-color: #545b62;
-}
+/* Mode-specific button styling - Removed redundant rules, using universal system */
 
 /* Danger Zone Styling */
 .danger-zone {

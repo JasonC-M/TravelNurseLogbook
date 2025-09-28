@@ -16,36 +16,20 @@ class ProfileManager {
       mapRegions: [],
       loaded: false
     };
+    
+    // Initialize event handlers
+    this.initializeEventHandlers();
   }
 
   // Initialize event handlers for profile form
   initializeEventHandlers() {
-    // Setup close button after a delay to ensure components are loaded
-    setTimeout(() => this.setupCloseButton(), 2000);
-    
     // Setup navigation warning for unsaved changes
     this.setupNavigationWarning();
   }
 
-  // Setup close button event handler
-  setupCloseButton() {
-    const closeBtn = document.getElementById('close-profile');
-    console.log('profile.js - 🔧 Setting up header close button, found:', !!closeBtn);
-    
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        console.log('profile.js - 🔄 Header close button clicked');
-        this.logPreferenceState('HEADER CLOSE BUTTON CLICKED');
-        this.closeProfile();
-      });
-      console.log('profile.js - ✅ Profile header close button handler attached');
-    } else {
-      console.log('profile.js - ⚠️ Profile header close button not found, will try again');
-      // Try again after another delay
-      setTimeout(() => this.setupCloseButton(), 1000);
-    }
-
-    // Setup profile delete button
+  // Setup additional profile-specific event handlers
+  setupProfileSpecificHandlers() {
+    // Setup profile delete button (not handled by universal system)
     const profileDeleteBtn = document.getElementById('profile-delete-btn');
     if (profileDeleteBtn) {
       profileDeleteBtn.addEventListener('click', () => {
@@ -58,6 +42,17 @@ class ProfileManager {
     // Setup navigation warning for unsaved changes (disabled)
   setupNavigationWarning() {
     // Navigation warnings removed for simpler UX
+  }
+
+  // Setup danger zone handlers
+  setupDangerZoneHandlers() {
+    const deleteBtn = document.getElementById('profile-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        this.deleteProfile();
+      });
+      console.log('profile.js - 🗑️ Profile delete button handler attached');
+    }
   }
 
   // Create initial profile for new users
@@ -870,7 +865,7 @@ class ProfileManager {
 
     // Keep button styling simple like contract form
     if (profileSaveBtn) {
-      profileSaveBtn.className = 'primary-btn';
+      profileSaveBtn.className = 'btn btn--secondary btn--compact';
       profileSaveBtn.style.minWidth = '200px';
       profileSaveBtn.style.fontSize = '16px';
       profileSaveBtn.style.padding = '12px 30px';
@@ -1104,6 +1099,7 @@ class ProfileManager {
         console.log('profile.js - 🔄 Display close button clicked');
         this.closeProfile();
       });
+      console.log('profile.js - ✅ Display close button handler attached');
     } else {
       console.log('profile.js - ⚠️ Display close button (close-profile-display-btn) not found!');
     }
@@ -1114,7 +1110,11 @@ class ProfileManager {
 
     if (cancelEditBtn) {
       cancelEditBtn.addEventListener('click', () => this.cancelEdit());
+      console.log('profile.js - ✅ Cancel edit button handler attached');
     }
+
+    // Setup delete button (in danger zone) - will be handled when mode switches
+    setTimeout(() => this.setupDangerZoneHandlers(), 100);
 
     // Set initial mode
     this.switchToDisplayMode();
@@ -1233,15 +1233,6 @@ class ProfileManager {
         checkbox.disabled = true;
       }
     });
-  }
-
-  // Close profile (used by close button in display mode)
-  closeProfile() {
-    // Close the profile slideout
-    const profileSlideout = document.getElementById('profile-slideout');
-    if (profileSlideout) {
-      profileSlideout.classList.remove('active');
-    }
   }
 
   // Get current map preferences for other modules

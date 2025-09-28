@@ -38,21 +38,104 @@ class ContractFormController {
     }
     
     this.setupEventHandlers();
+    this.initializeDefaultState(); // Set default button visibility
     this.initialized = true; // Mark as initialized
     
     return true;
+  }
+  
+  setButtonVisibility(mode) {
+    console.log(`🎯 Setting button visibility for mode: ${mode}`);
+    
+    // Find the contract slideout container where the contract form HTML is loaded
+    const contractSlideout = document.getElementById('contract-slideout');
+    const profileContent = document.querySelector('.profile-content');
+    
+    console.log('🔍 DOM Structure Check:');
+    console.log('  Contract slideout element check:');
+    console.log('    by ID:', document.getElementById('contract-slideout'));
+    console.log('    by class:', document.querySelector('.contract-slideout'));
+    console.log('  All slideouts:', document.querySelectorAll('[id*="slideout"]'));
+    console.log('  Profile content:', profileContent ? 'found' : 'missing');
+    
+    if (contractSlideout) {
+      console.log('  Contract slideout HTML:', contractSlideout.innerHTML.substring(0, 300) + '...');
+    } else {
+      console.log('❌ Contract slideout not found - checking page structure...');
+      console.log('  Body innerHTML preview:', document.body.innerHTML.substring(0, 500));
+    }
+    
+    // Get button groups specifically from the contract slideout (not global)
+    const formCreateActions = contractSlideout?.querySelector('.create-actions');
+    const formDisplayActions = contractSlideout?.querySelector('.display-actions');
+    const formEditActions = contractSlideout?.querySelector('.edit-actions');
+    
+    console.log('🔍 Contract form button groups:');
+    console.log('  Create actions:', formCreateActions ? 'found' : 'missing');
+    console.log('  Display actions:', formDisplayActions ? 'found' : 'missing');  
+    console.log('  Edit actions:', formEditActions ? 'found' : 'missing');
+    
+    // Use only the contract form button groups (not profile form)
+    const useCreateActions = formCreateActions;
+    const useDisplayActions = formDisplayActions;
+    const useEditActions = formEditActions;
+    
+    // Hide all groups first
+    if (useCreateActions) useCreateActions.style.display = 'none';
+    if (useDisplayActions) useDisplayActions.style.display = 'none';
+    if (useEditActions) useEditActions.style.display = 'none';
+    
+    // Show the appropriate group based on mode
+    if (mode === 'create' && useCreateActions) {
+      useCreateActions.style.display = 'flex';
+      console.log('✅ Showing CREATE actions: Save, Cancel');
+    } else if (mode === 'edit' && useEditActions) {
+      useEditActions.style.display = 'flex';
+      console.log('✅ Showing EDIT actions: Save, Cancel');
+    } else if (mode === 'display' && useDisplayActions) {
+      useDisplayActions.style.display = 'flex';
+      console.log('✅ Showing DISPLAY actions: Edit, Close');
+    } else {
+      console.error(`❌ Could not show buttons for mode: ${mode}`);
+      console.log('Available elements:', {
+        useCreateActions: !!useCreateActions,
+        useDisplayActions: !!useDisplayActions,
+        useEditActions: !!useEditActions
+      });
+    }
+    
+    // Show actual button contents
+    if (useCreateActions) {
+      const buttons = useCreateActions.querySelectorAll('button');
+      console.log('  CREATE buttons:', Array.from(buttons).map(b => `${b.id}: "${b.textContent}"`));
+    }
+    if (useDisplayActions) {
+      const buttons = useDisplayActions.querySelectorAll('button');
+      console.log('  DISPLAY buttons:', Array.from(buttons).map(b => `${b.id}: "${b.textContent}"`));
+    }
+    if (useEditActions) {
+      const buttons = useEditActions.querySelectorAll('button');
+      console.log('  EDIT buttons:', Array.from(buttons).map(b => `${b.id}: "${b.textContent}"`));
+    }
+  }
+  
+  initializeDefaultState() {
+    // Hide all action button groups by default
+    const allActions = this.form.querySelectorAll('.create-actions, .display-actions, .edit-actions');
+    allActions.forEach(actions => {
+      actions.style.display = 'none';
+    });
+    
+    // Hide danger zone by default
+    const dangerZone = this.form.querySelector('.danger-zone');
+    if (dangerZone) {
+      dangerZone.style.display = 'none';
+    }
   }
 
 
   
   setupEventHandlers() {
-    // Close button
-    const closeBtn = document.getElementById('close-contract');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        this.closeForm();
-      });
-    }
     
     // Save Contract button (CREATE mode)
     const saveBtn = document.getElementById('save-contract-btn');
@@ -106,11 +189,12 @@ class ContractFormController {
       deleteBtn.dataset.listenerAttached = 'true'; // Mark as having listener
     }
 
-    // Cancel buttons
+    // Cancel and close buttons
     const cancelBtn = document.getElementById('cancel-contract-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const closeDisplayBtn = document.getElementById('close-display-btn');
     
+    // Cancel buttons still need custom handling
     if (cancelBtn) {
       cancelBtn.addEventListener('click', () => {
         this.closeForm();
@@ -123,19 +207,26 @@ class ContractFormController {
       });
     }
     
+    // Close display button (now in header)
     if (closeDisplayBtn) {
       closeDisplayBtn.addEventListener('click', () => {
         this.closeForm();
       });
+      console.log('contract.js - ✅ Close display button handler attached');
     }
   }
   
   openCreateMode() {
-    this.currentMode = 'create';
+    console.log('🆕 openCreateMode() called');
+    console.log('🔍 Form element at start:', this.form);
+    console.log('🔍 Form querySelector test:', document.getElementById('contract-form'));
+    
+    this.currentMode = 'edit'; // New contracts default to edit mode
     this.currentContract = null;
     this.clearForm();      // Clear all form fields for new contract
-    this.setCreateMode();  // Set form to create mode
+    this.setEditMode();    // Set form to edit mode for new contract creation
     this.openForm();
+    console.log('🆕 openCreateMode() completed');
   }
   
   openDisplayMode(contract) {
@@ -240,17 +331,18 @@ class ContractFormController {
     }
     
     if (createdEl) {
-      const createdDate = contract.created_at ? new Date(contract.created_at).toLocaleDateString() : '';
+      const createdDate = contract.created_at ? new Date(contract.created_at).toISOString().replace('T', ' ').replace('.000Z', ' UTC') : '';
       createdEl.textContent = createdDate;
     }
     
     if (updatedEl) {
-      const updatedDate = contract.updated_at ? new Date(contract.updated_at).toLocaleDateString() : '';
+      const updatedDate = contract.updated_at ? new Date(contract.updated_at).toISOString().replace('T', ' ').replace('.000Z', ' UTC') : '';
       updatedEl.textContent = updatedDate;
     }
   }
   
   setDisplayMode() {
+    console.log('👁️ setDisplayMode() called');
     
     // Hide all input fields, show display values
     const inputFields = this.form.querySelectorAll('input[type="text"], input[type="date"], input[type="number"]');
@@ -263,20 +355,18 @@ class ContractFormController {
       display.style.display = 'block';
     });
     
-    // Hide all action button groups
-    const allActions = this.form.querySelectorAll('.create-actions, .display-actions, .edit-actions');
-    allActions.forEach(actions => {
-      actions.style.display = 'none';
-    });
+    // Use centralized button visibility control
+    this.setButtonVisibility('display');
     
-    // Show only display actions
-    const displayActions = this.form.querySelector('.display-actions');
-    if (displayActions) {
-      displayActions.style.display = 'flex';
+    // Hide danger zone in display mode
+    const dangerZone = this.form.querySelector('.danger-zone');
+    if (dangerZone) {
+      dangerZone.style.display = 'none';
     }
   }
   
   setCreateMode() {
+    console.log('🆕 setCreateMode() called');
     
     // Show input fields, hide display values  
     const inputFields = this.form.querySelectorAll('input[type="text"], input[type="date"], input[type="number"]');
@@ -289,20 +379,23 @@ class ContractFormController {
       display.style.display = 'none';
     });
     
-    // Hide all action button groups
-    const allActions = this.form.querySelectorAll('.create-actions, .display-actions, .edit-actions');
-    allActions.forEach(actions => {
-      actions.style.display = 'none';
-    });
+    // Use centralized button visibility control
+    this.setButtonVisibility('create');
     
-    // Show only create actions
-    const createActions = this.form.querySelector('.create-actions');
-    if (createActions) {
-      createActions.style.display = 'flex';
+    // Hide danger zone in create mode
+    const dangerZone = this.form.querySelector('.danger-zone');
+    if (dangerZone) {
+      dangerZone.style.display = 'none';
     }
   }
   
   setEditMode() {
+    console.log('🔧 setEditMode() called - currentContract:', this.currentContract?.id || 'new');
+    
+    if (!this.form) {
+      console.error('❌ Form element not found in setEditMode()');
+      return;
+    }
     
     // Show input fields, hide display values
     const inputFields = this.form.querySelectorAll('input[type="text"], input[type="date"], input[type="number"]');
@@ -315,20 +408,51 @@ class ContractFormController {
       display.style.display = 'none';
     });
     
-    // Hide all action button groups
-    const allActions = this.form.querySelectorAll('.create-actions, .display-actions, .edit-actions');
-    allActions.forEach(actions => {
-      actions.style.display = 'none';
-    });
+    // Force correct button visibility with explicit control
+    this.setButtonVisibility('edit');
     
-    // Show only edit actions
-    const editActions = this.form.querySelector('.edit-actions');
-    if (editActions) {
-      editActions.style.display = 'flex';
+    // Debug: Show current button visibility after a brief delay
+    setTimeout(() => {
+      const createVis = this.form.querySelector('.create-actions')?.style.display;
+      const displayVis = this.form.querySelector('.display-actions')?.style.display;  
+      const editVis = this.form.querySelector('.edit-actions')?.style.display;
+      console.log('🔍 Final button visibility - Create:', createVis, 'Display:', displayVis, 'Edit:', editVis);
+    }, 100);
+    
+    // Update the save button handler based on whether this is a new or existing contract
+    const updateBtn = document.getElementById('update-contract-btn');
+    if (updateBtn) {
+      // Remove existing event listeners
+      const newUpdateBtn = updateBtn.cloneNode(true);
+      updateBtn.parentNode.replaceChild(newUpdateBtn, updateBtn);
       
-        // Debug: Check if delete button is visible in edit actions
-      const deleteBtn = editActions.querySelector('#delete-contract-btn');
-    } else {
+      if (this.currentContract && this.currentContract.id) {
+        // Existing contract - use update function
+        newUpdateBtn.addEventListener('click', () => this.updateContract());
+      } else {
+        // New contract - use save function  
+        newUpdateBtn.addEventListener('click', () => this.saveContract());
+      }
+    }
+    
+    // Show danger zone only for existing contracts (not new ones)
+    const dangerZone = this.form.querySelector('.danger-zone');
+    if (dangerZone) {
+      if (this.currentContract && this.currentContract.id) {
+        dangerZone.style.display = 'block'; // Existing contract - show delete
+      } else {
+        dangerZone.style.display = 'none';  // New contract - hide delete
+      }
+    }
+    
+    // Set appropriate title based on whether this is new or existing contract
+    const titleEl = document.getElementById('contract-form-title');
+    if (titleEl) {
+      if (this.currentContract && this.currentContract.id) {
+        titleEl.textContent = `Edit Contract: ${this.currentContract.hospital_name}`;
+      } else {
+        titleEl.textContent = 'New Contract';
+      }
     }
   }
   
@@ -418,7 +542,9 @@ class ContractFormController {
   }
 
   openEditMode() {
+    console.log('✏️ openEditMode() called for contract:', this.currentContract?.id);
     if (!this.currentContract) {
+      console.error('❌ openEditMode() called but no currentContract');
       return;
     }
     
@@ -426,6 +552,7 @@ class ContractFormController {
     this.updateDebugInfo();
     this.populateFormBasic(this.currentContract);
     this.setEditMode();
+    console.log('✏️ openEditMode() completed');
   }
 
 

@@ -6,7 +6,8 @@
 
 class ApiClient {
     constructor() {
-        this.baseURL = window.location.protocol === 'https:' ? 'https://localhost' : 'http://localhost';
+        // Use the same origin as the current page (nginx will proxy /api/ to backend)
+        this.baseURL = window.location.origin;
         this.apiPath = '/api';
         this.token = this.getStoredToken();
         this.isRefreshing = false;
