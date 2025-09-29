@@ -18,7 +18,7 @@ INSERT INTO contracts (
 ) VALUES
 
 -- Contract 1: CURRENT CONTRACT (ends in future)
-('{USER_ID}', 'Seattle Children''s Hospital', '4800 Sand Point Way NE, Seattle, WA 98105', 47.6625, -122.2947, '2025-07-01', '2025-09-30', NOW(), NOW()),
+('{USER_ID}', 'Seattle Children''s Hospital', '4800 Sand Point Way NE, Seattle, WA 98105', 47.66284925157117, -122.28207402883619, '2025-07-01', '2025-09-30', NOW(), NOW()),
 
 -- Contract 2: Recent past
 ('{USER_ID}', 'Kuakini Medical Center', '347 N Kuakini St, Honolulu, HI 96817', 21.3099, -157.8581, '2025-03-18', '2025-06-17', NOW(), NOW()),
