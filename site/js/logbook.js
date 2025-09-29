@@ -127,6 +127,15 @@ class SampleContractsLoader {
     }, 2000);
   }
 
+  // Public method to reset sample contracts button state
+  resetSampleContractsButton() {
+    const addSampleContractsBtn = document.querySelector('#add-sample-contracts');
+    if (addSampleContractsBtn) {
+      this.updateButtonState(addSampleContractsBtn, 'Add Sample Contracts', false);
+      console.log('logbook.js - 🔄 Reset sample contracts button state');
+    }
+  }
+
   // Load all sample contracts into the database
   async loadAll() {
     const loadButton = document.getElementById('add-sample-contracts');
@@ -703,8 +712,12 @@ class LogbookApp {
       const removeAllContractsBtn = document.querySelector('#remove-all-contracts');
       
       if (result.data.length === 0) {
-        // Show add sample contracts button if no contracts exist
-        if (addSampleContractsBtn) addSampleContractsBtn.style.display = 'inline-block';
+        // Show add sample contracts button if no contracts exist and reset its state
+        if (addSampleContractsBtn) {
+          // Reset button state in case it was left in loading state
+          sampleContractsLoader.resetSampleContractsButton();
+          addSampleContractsBtn.style.display = 'inline-block';
+        }
         if (removeAllContractsBtn) removeAllContractsBtn.style.display = 'none';
       } else {
         // Show remove button if contracts exist
