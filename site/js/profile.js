@@ -97,11 +97,29 @@ class ProfileManager {
     return firstName && lastName && fullName && notFirstLogin;
   }
 
-  // Show profile completion prompt
+  // Show profile completion prompt - auto-open in edit mode for new users
   showProfileCompletionPrompt() {
     const slideout = document.getElementById('profile-slideout');
     slideout.classList.add('open');
     this.isProfileOpen = true;
+    
+    // Check if this is the user's first profile visit ever
+    const hasVisitedProfile = localStorage.getItem('hasVisitedProfile');
+    
+    if (!hasVisitedProfile) {
+      // First time visiting profile - open in edit mode automatically
+      console.log('profile.js - 🆕 First-time user - opening profile in edit mode');
+      localStorage.setItem('hasVisitedProfile', 'true');
+      
+      // Small delay to ensure DOM is ready, then switch to edit mode
+      setTimeout(() => {
+        this.switchToEditMode();
+        console.log('profile.js - ✏️ Profile auto-opened in edit mode for first-time user');
+      }, 200);
+    } else {
+      // Returning user - show in display mode (default)
+      console.log('profile.js - 👋 Returning user - profile opened in display mode');
+    }
     
     this.showProfileSuccess('Welcome! Please complete your profile to get started.');
   }
@@ -317,6 +335,21 @@ class ProfileManager {
       slideout.classList.add('open');
       this.isProfileOpen = true;
       console.log('profile.js - ✅ Profile opened');
+      
+      // Check if this is the user's first profile visit ever
+      const hasVisitedProfile = localStorage.getItem('hasVisitedProfile');
+      
+      if (!hasVisitedProfile) {
+        // First time visiting profile - open in edit mode automatically
+        console.log('profile.js - 🆕 First-time user manually opened profile - switching to edit mode');
+        localStorage.setItem('hasVisitedProfile', 'true');
+        
+        // Small delay to ensure DOM is ready, then switch to edit mode
+        setTimeout(() => {
+          this.switchToEditMode();
+          console.log('profile.js - ✏️ Manual profile opening - auto-switched to edit mode for first-time user');
+        }, 200);
+      }
     } else {
       slideout.classList.remove('open');
       this.isProfileOpen = false;
