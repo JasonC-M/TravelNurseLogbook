@@ -150,17 +150,29 @@ class SampleContractsLoader {
       const result = await this.insertContracts(user.id, loadButton);
       
       if (result.success) {
-        // Hide button and refresh UI
-        loadButton.style.display = 'none';
-        await this.refreshUI();
+        // Show success message before hiding
+        this.updateButtonState(loadButton, `✅ Loaded ${result.successCount} Contracts`, true);
+        
+        // Wait 2 seconds to show success message, then hide button and refresh UI
+        setTimeout(async () => {
+          loadButton.style.display = 'none';
+          await this.refreshUI();
+        }, 2000);
+        
         return { success: true, ...result };
       } else {
         throw new Error(result.error);
       }
       
     } catch (error) {
-      this.updateButtonState(loadButton, 'Error Loading', true);
-      this.resetButton(loadButton, originalText);
+      console.error('logbook.js - Sample contracts loading error:', error);
+      this.updateButtonState(loadButton, '❌ Loading Failed', true);
+      
+      // Reset button after 3 seconds
+      setTimeout(() => {
+        this.resetButton(loadButton, originalText);
+      }, 3000);
+      
       return { success: false, error: error.message };
     }
   }
@@ -230,7 +242,7 @@ async function removeAllContracts() {
       return { success: false, error: 'User cancelled' };
     }
 
-    removeButton.textContent = 'Removing Contracts...';
+    removeButton.textContent = '🗑️ Removing All Contracts...';
     removeButton.disabled = true;
     
     // Verify user authentication
@@ -244,17 +256,20 @@ async function removeAllContracts() {
     const result = await db.deleteAllContracts(session.user.id);
     
     if (result.success) {
-      // Refresh the UI
+      // Show success message
+      removeButton.textContent = '✅ All Contracts Removed';
+      
+      // Refresh the UI  
       if (window.logbookApp) {
         await window.logbookApp.loadContracts();
       }
       
-      removeButton.textContent = 'All Removed';
+      // Keep success message visible for 3 seconds
       setTimeout(() => {
         // After successful removal, the loadContracts call will handle button toggle
         removeButton.textContent = originalText;
         removeButton.disabled = false;
-      }, 2000);
+      }, 3000);
       
       return { success: true };
     } else {
@@ -262,12 +277,16 @@ async function removeAllContracts() {
     }
     
   } catch (error) {
-    removeButton.textContent = 'Error Removing';
+    console.error('logbook.js - Delete contracts error:', error);
+    removeButton.textContent = '❌ Deletion Failed';
     removeButton.disabled = true;
+    
+    // Reset button after 3 seconds
     setTimeout(() => {
       removeButton.textContent = originalText;
       removeButton.disabled = false;
-    }, 2000);
+    }, 3000);
+    
     return { success: false, error: error.message };
   }
 }
