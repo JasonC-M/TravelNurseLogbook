@@ -701,18 +701,7 @@ class LogbookApp {
         console.log('logbook.js - ❌ window.refreshContractMarkers not available');
       }
       
-      // For new users with no contracts, ensure map shows CONUS view
-      if (result.data.length === 0) {
-        console.log('logbook.js - 🗺️ New user with no contracts - setting CONUS view');
-        setTimeout(() => {
-          const map = window.MapController ? window.MapController.getMap() : null;
-          if (map) {
-            // CONUS center coordinates and zoom level
-            map.setView([39.8283, -98.5795], 4);
-            console.log('logbook.js - ✅ Map centered on CONUS for new user');
-          }
-        }, 500); // Small delay to ensure map is ready
-      }
+      // Map will default to CONUS and Smart View will adjust based on contracts
 
 
     } catch (error) {

@@ -56,18 +56,15 @@ async function initializeMap() {
     }
 
     try {
-        // Create map with fractional zoom enabled for precise control
+        // Create map with explicit CONUS center and zoom
         contractMap = L.map('map', {
-            zoomSnap: 0.1,    // Allow zoom in 0.1 increments (more precise)
-            zoomDelta: 0.25   // Zoom buttons/keyboard increment by 0.25
+            center: [39.8283, -98.5795], // CONUS center coordinates
+            zoom: 4,                      // Appropriate zoom for CONUS
+            zoomSnap: 0.1,               // Allow zoom in 0.1 increments (more precise)
+            zoomDelta: 0.25              // Zoom buttons/keyboard increment by 0.25
         });
         
-        // Use fitBounds to automatically calculate optimal center and zoom
-        contractMap.fitBounds(CONUS_BOUNDS, {
-            padding: [10, 10], // Small padding
-            animate: false,
-            maxZoom: 6.0
-        });
+        console.log('map.js - ✅ Map initialized with CONUS center view');
         
         // Initialize marker arrays
         contractMarkers = [];

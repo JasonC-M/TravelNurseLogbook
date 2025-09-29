@@ -157,14 +157,14 @@ class ProfileManager {
         } else {
           // No profile exists, use defaults
           console.log('profile.js - 📋 No saved profile, using default preferences');
-          this.cachedPreferences.mapRegions = ['conus', 'alaska']; // Default regions
+          this.cachedPreferences.mapRegions = ['conus']; // Default to CONUS only for first-time users
           this.cachedPreferences.loaded = true;
           return true;
         }
       } catch (error) {
         console.error('profile.js - Preferences load error:', error);
         // Use defaults on error
-        this.cachedPreferences.mapRegions = ['conus', 'alaska'];
+        this.cachedPreferences.mapRegions = ['conus'];
         this.cachedPreferences.loaded = true;
         return true;
       }
@@ -239,12 +239,13 @@ class ProfileManager {
         window.logbookApp.updateProfileButtonText();
       }
       
-      // Check if profile needs completion (only show prompt once per session)
-      if (!this.isProfileComplete(this.userProfile) && !sessionStorage.getItem('profilePromptShown')) {
-        sessionStorage.setItem('profilePromptShown', 'true');
+      // Check if this is the very first visit ever - only auto-open once
+      const hasVisitedProfile = localStorage.getItem('hasVisitedProfile');
+      
+      if (!hasVisitedProfile) {
+        // First-ever visit - auto-open profile in edit mode
+        console.log('profile.js - 🆕 First-ever visit detected - auto-opening profile in edit mode');
         setTimeout(() => this.showProfileCompletionPrompt(), 1000);
-      } else if (this.isProfileComplete(this.userProfile)) {
-        sessionStorage.removeItem('profilePromptShown');
       }
     } catch (error) {
       this.showProfileError('Failed to load profile data: ' + error.message);
@@ -390,7 +391,7 @@ class ProfileManager {
     
     if (confirmation !== 'DELETE') {
       if (confirmation !== null) {
-        alert('Account deletion cancelled. You must type "DELETE" exactly to confirm.');
+        console.log('profile.js - ❌ Account deletion cancelled. User must type "DELETE" exactly to confirm.');
       }
       return;
     }
@@ -398,7 +399,7 @@ class ProfileManager {
     try {
       const user = window.auth.getCurrentUser();
       if (!user) {
-        alert('No user found to delete.');
+        console.error('profile.js - ❌ No user found to delete.');
         return;
       }
 
@@ -430,7 +431,7 @@ class ProfileManager {
 
     } catch (error) {
       console.error('profile.js - Profile delete error:', error);
-      alert('Error during account deletion: ' + error.message + '\n\nPlease contact support if the problem persists.');
+      console.error('profile.js - ❌ Error during account deletion:', error.message, '- Please contact support if the problem persists.');
       
       // Re-enable button
       const deleteBtn = document.getElementById('profile-delete-btn');
@@ -680,13 +681,13 @@ class ProfileManager {
   loadMapPreferences() {
     console.log('profile.js - 🗺️ Loading map preferences...', this.userProfile?.map_preferences);
     
-    // Default preferences (CONUS, AK, HI, PR, VI enabled by default)
+    // Default preferences (CONUS only for initial map centering)
     const defaultPrefs = {
       conus: true,
-      alaska: true,
-      hawaii: true,
-      'puerto-rico': true,
-      'us-virgin-islands': true,
+      alaska: false,
+      hawaii: false,
+      'puerto-rico': false,
+      'us-virgin-islands': false,
       guam: false,
       'american-samoa': false,
       'northern-mariana': false,
@@ -771,7 +772,7 @@ class ProfileManager {
     } else {
       // Default preferences if no saved profile
       console.log('profile.js - 📋 No saved preferences, using defaults for cache');
-      enabledRegions.push('conus', 'alaska');
+      enabledRegions.push('conus'); // Default to CONUS only for first-time users
     }
     
     // Cache the results
